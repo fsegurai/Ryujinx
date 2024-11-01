@@ -1,17 +1,17 @@
 cpu:
-  - GreemDev
+  - fsegurai
 
 gpu:
-  - GreemDev
+  - fsegurai
 
 gui:
-  - GreemDev
+  - fsegurai
 
 horizon:
-  - GreemDev
+  - fsegurai
 
 infra:
-  - GreemDev
+  - fsegurai
 
 default:
   - '@developers'

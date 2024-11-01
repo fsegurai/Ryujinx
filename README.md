@@ -1,17 +1,17 @@
 <h1 align="center">
   <br>
-  <img src="https://raw.githubusercontent.com/GreemDev/Ryujinx/master/distribution/misc/Logo.svg" alt="Ryujinx" width="150"></a>
+  <img src="https://raw.githubusercontent.com/fsegurai/Ryujinx/refs/heads/main/distribution/misc/Logo.svg" alt="Ryujinx" width="150"></a>
   <br>
   <b>Ryujinx</b>
   <br>
   <sub><sup><b>(REE-YOU-JINX)</b></sup></sub>
   <br>
-    <a href="https://github.com/GreemDev/Ryujinx/actions/workflows/release.yml">
-        <img src="https://github.com/GreemDev/Ryujinx/actions/workflows/release.yml/badge.svg"
+    <a href="https://github.com/fsegurai/Ryujinx/actions/workflows/release.yml">
+        <img src="https://github.com/fsegurai/Ryujinx/actions/workflows/release.yml/badge.svg"
             alt="">
     </a>
-    <a href="https://github.com/GreemDev/Ryujinx/releases/latest">
-        <img src="https://img.shields.io/github/v/release/GreemDev/Ryujinx"
+    <a href="https://github.com/fsegurai/Ryujinx/releases/latest">
+        <img src="https://img.shields.io/github/v/release/fsegurai/Ryujinx"
             alt="Latest Release">
     </a>
 </h1>
@@ -20,7 +20,7 @@
   Ryujinx is an open-source Nintendo Switch emulator, originally created by gdkchan, written in C#.
   This emulator aims at providing excellent accuracy and performance, a user-friendly interface and consistent builds.
   It was written from scratch and development on the project began in September 2017.
-  Ryujinx is available on Github under the <a href="https://github.com/GreemDev/Ryujinx/blob/master/LICENSE.txt" target="_blank">MIT license</a>.
+  Ryujinx is available on Github under the <a href="https://github.com/fsegurai/Ryujinx/blob/main/LICENSE.txt" target="_blank">MIT license</a>.
   <br />
 </p>
 <p align="center">
@@ -30,21 +30,14 @@
   <br>
   This is not a Ryujinx revival project. This is not a Phoenix project.
   <br>
-  Guides and documentation can be found on the <a href="https://github.com/GreemDev/Ryujinx/wiki">Wiki tab</a>.
+  Guides and documentation can be found on the <a href="https://github.com/fsegurai/Ryujinx/wiki">Wiki tab</a>.
 </p>
 <p align="center">
   If you would like a version more preservative fork of Ryujinx, check out <a href="https://github.com/ryujinx-mirror/ryujinx">ryujinx-mirror</a>.
 </p>
 
 <p align="center">
-    Click below to join the Discord:
-    <br>
-    <a href="https://discord.gg/dHPrkBkkyA">
-        <img src="https://img.shields.io/discord/1294443224030511104?color=5865F2&label=Ryubing&logo=discord&logoColor=white" alt="Discord">
-    </a>
-    <br>
-    <br>
-    <img src="https://raw.githubusercontent.com/GreemDev/Ryujinx/refs/heads/master/docs/shell.png">
+    <img src="https://raw.githubusercontent.com/fsegurai/Ryujinx/refs/heads/main/docs/shell.png">
 </p>
 
 ## Compatibility
@@ -63,10 +56,10 @@ failing to meet this requirement may result in a poor gameplay experience or une
 
 ## Latest build
 
-These builds are compiled automatically for each commit on the master branch.
+These builds are compiled automatically for each commit on the main branch.
 While we strive to ensure optimal stability and performance prior to pushing an update, our automated builds **may be unstable or completely broken**.
 
-You can find the latest release [here](https://github.com/GreemDev/Ryujinx/releases/latest).
+You can find the latest release [here](https://github.com/fsegurai/Ryujinx/releases/latest).
 
 ## Documentation
 
@@ -83,7 +76,7 @@ Make sure your SDK version is higher or equal to the required version specified 
 
 ### Step 2
 
-Either use `git clone https://github.com/GreemDev/Ryujinx` on the command line to clone the repository or use Code --> Download zip button to get the files.
+Either use `git clone https://github.com/fsegurai/Ryujinx` on the command line to clone the repository or use Code --> Download zip button to get the files.
 
 ### Step 3
 

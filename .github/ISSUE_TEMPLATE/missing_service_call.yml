@@ -20,6 +20,6 @@ body:
     id: required
     attributes:
       label: Required by
-      description:  Add links to the [compatibility list page(s)](https://github.com/Ryujinx/Ryujinx-Games-List/issues) of the game(s) that require this service.
+      description:  Add links to the [compatibility list page(s)](https://github.com/fsegurai/Ryujinx/issues) of the game(s) that require this service.
     validations:
       required: true
