@@ -604,7 +604,7 @@ namespace Ryujinx.Ava
 
             SystemVersion firmwareVersion = ContentManager.GetCurrentFirmwareVersion();
 
-            if (Application.Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime)
             {
                 if (!SetupValidator.CanStartApplication(ContentManager, ApplicationPath, out UserError userError))
                 {
@@ -618,7 +618,7 @@ namespace Ryujinx.Ava
                                     LocaleManager.Instance.UpdateAndGetDynamicValue(LocaleKeys.DialogFirmwareInstallEmbeddedMessage, firmwareVersion.VersionString),
                                     LocaleManager.Instance[LocaleKeys.InputDialogYes],
                                     LocaleManager.Instance[LocaleKeys.InputDialogNo],
-                                    "");
+                                    string.Empty);
 
                                 if (result != UserResult.Yes)
                                 {
@@ -648,7 +648,7 @@ namespace Ryujinx.Ava
                                     LocaleManager.Instance.UpdateAndGetDynamicValue(LocaleKeys.DialogFirmwareInstalledMessage, firmwareVersion.VersionString),
                                     LocaleManager.Instance.UpdateAndGetDynamicValue(LocaleKeys.DialogFirmwareInstallEmbeddedSuccessMessage, firmwareVersion.VersionString),
                                     LocaleManager.Instance[LocaleKeys.InputDialogOk],
-                                    "",
+                                    string.Empty,
                                     LocaleManager.Instance[LocaleKeys.RyujinxInfo]);
                             }
                         }
@@ -820,20 +820,12 @@ namespace Ryujinx.Ava
             VirtualFileSystem.ReloadKeySet();
 
             // Initialize Renderer.
-            IRenderer renderer;
-
-            if (ConfigurationState.Instance.Graphics.GraphicsBackend.Value == GraphicsBackend.Vulkan)
-            {
-                renderer = new VulkanRenderer(
-                    Vk.GetApi(),
+            IRenderer renderer = ConfigurationState.Instance.Graphics.GraphicsBackend.Value == GraphicsBackend.OpenGl
+                ? new OpenGLRenderer()
+                : VulkanRenderer.Create(
+                    ConfigurationState.Instance.Graphics.PreferredGpu,
                     (RendererHost.EmbeddedWindow as EmbeddedWindowVulkan)!.CreateSurface,
-                    VulkanHelper.GetRequiredInstanceExtensions,
-                    ConfigurationState.Instance.Graphics.PreferredGpu.Value);
-            }
-            else
-            {
-                renderer = new OpenGLRenderer();
-            }
+                    VulkanHelper.GetRequiredInstanceExtensions);
 
             BackendThreading threadingMode = ConfigurationState.Instance.Graphics.BackendThreading;
 
@@ -1060,7 +1052,7 @@ namespace Ryujinx.Ava
             string dockedMode = ConfigurationState.Instance.System.EnableDockedMode ? LocaleManager.Instance[LocaleKeys.Docked] : LocaleManager.Instance[LocaleKeys.Handheld];
 
             UpdateShaderCount();
-            
+
             if (GraphicsConfig.ResScale != 1)
             {
                 dockedMode += $" ({GraphicsConfig.ResScale}x)";
