@@ -41,8 +41,8 @@ namespace Ryujinx.Ava.UI.Views.Main
         private CheckBox[] GenerateToggleFileTypeItems() =>
             Enum.GetValues<FileTypes>()
                 .Select(it => (FileName: Enum.GetName(it)!, FileType: it))
-                .Select(it => 
-                    new CheckBox 
+                .Select(it =>
+                    new CheckBox
                     {
                         Content = $".{it.FileName}",
                         IsChecked = it.FileType.GetConfigValue(ConfigurationState.Instance.UI.ShownFileTypes),
@@ -203,6 +203,8 @@ namespace Ryujinx.Ava.UI.Views.Main
             if (Updater.CanUpdate(true))
                 await Updater.BeginParse(Window, true);
         }
+
+        public async void OpenXCITrimmerWindow(object sender, RoutedEventArgs e) => await XCITrimmerWindow.Show(ViewModel);
 
         public async void OpenAboutWindow(object sender, RoutedEventArgs e) => await AboutWindow.Show();
 

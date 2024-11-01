@@ -323,5 +323,15 @@ namespace Ryujinx.Ava.UI.Controls
             if (sender is MenuItem { DataContext: MainWindowViewModel { SelectedApplication: not null } viewModel })
                 await viewModel.LoadApplication(viewModel.SelectedApplication);
         }
+
+        public async void TrimXCI_Click(object sender, RoutedEventArgs args)
+        {
+            var viewModel = (sender as MenuItem)?.DataContext as MainWindowViewModel;
+
+            if (viewModel?.SelectedApplication != null)
+            {
+                await viewModel.TrimXCIFile(viewModel.SelectedApplication.Path);
+            }
+        }
     }
 }

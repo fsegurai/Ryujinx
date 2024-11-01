@@ -9,7 +9,7 @@
     <MenuItem
         Click="RunApplication_Click"
         Header="{locale:Locale GameListContextMenuRunApplication}"
-        Icon="{icon:Icon fa-solid fa-play}"/>
+        Icon="{icon:Icon fa-solid fa-play}" />
     <MenuItem
         Click="ToggleFavorite_Click"
         Header="{locale:Locale GameListContextMenuToggleFavorite}"
@@ -71,7 +71,14 @@
         Icon="{icon:Icon mdi-folder-file}"
         ToolTip.Tip="{locale:Locale GameListContextMenuOpenSdModsDirectoryToolTip}" />
     <Separator />
-    <MenuItem Header="{locale:Locale GameListContextMenuCacheManagement}" Icon="{icon:Icon mdi-cached}">
+    <MenuItem
+        Click="TrimXCI_Click"
+        Header="{locale:Locale GameListContextMenuTrimXCI}"
+        IsEnabled="{Binding TrimXCIEnabled}"
+        ToolTip.Tip="{locale:Locale GameListContextMenuTrimXCIToolTip}" />
+    <Separator />
+    <MenuItem Header="{locale:Locale GameListContextMenuCacheManagement}"
+        Icon="{icon:Icon mdi-cached}">
         <MenuItem
             Click="PurgePtcCache_Click"
             Header="{locale:Locale GameListContextMenuCacheManagementPurgePptc}"
