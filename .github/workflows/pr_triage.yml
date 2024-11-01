@@ -19,7 +19,7 @@ jobs:
            # Ensure we pin the source origin as pull_request_target run under forks.
            fetch-depth: 0
            repository: fsegurai/Ryujinx
-           ref: master
+           ref: main
 
       - name: Update labels based on changes
         uses: actions/labeler@v5
