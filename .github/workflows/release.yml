@@ -25,6 +25,10 @@ env:
   RYUJINX_TARGET_RELEASE_CHANNEL_REPO: "Ryujinx"
   RELEASE: 1
 
+permissions:
+  packages: write
+  contents: write
+
 jobs:
   tag:
     name: Create tag
