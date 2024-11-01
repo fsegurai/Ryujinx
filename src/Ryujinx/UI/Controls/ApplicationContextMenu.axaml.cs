@@ -287,7 +287,7 @@ namespace Ryujinx.Ava.UI.Controls
                 AllowMultiple = false,
             });
 
-            if (result.Count == 0)
+            if (result.Count() == 0)
                 return;
 
             ApplicationHelper.ExtractSection(
