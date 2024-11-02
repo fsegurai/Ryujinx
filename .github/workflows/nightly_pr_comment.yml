@@ -18,8 +18,8 @@ jobs:
         with:
           script: |
             const {owner, repo} = context.repo;
-            const run_id = ${{github.event.workflow_run.id}};
-            const pull_head_sha = '${{github.event.workflow_run.head_sha}}';
+            const run_id = context.payload.workflow_run.id;
+            const pull_head_sha = context.payload.workflow_run.head_sha;
 
             const issue_number = await (async () => {
               const pulls = await github.rest.pulls.list({owner, repo});
@@ -66,4 +66,3 @@ jobs:
             } else {
               core.info(`Creating a comment`);
               await github.rest.issues.createComment({repo, owner, issue_number, body});
-            }
