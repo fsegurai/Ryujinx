@@ -1,10 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DefineConstants Condition=" '$(ExtraDefineConstants)' != '' ">
-      $(DefineConstants);$(ExtraDefineConstants)</DefineConstants>
+      $(DefineConstants);$(ExtraDefineConstants)
+    </DefineConstants>
+    <DefineConstants Condition=" '$(ExtraDefineConstants)' == '' ">
+      $(DefineConstants)
+    </DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,5 +17,4 @@
     <PackageReference Include="Humanizer" />
     <PackageReference Include="Gommon" />
   </ItemGroup>
-
 </Project>
