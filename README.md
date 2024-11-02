@@ -8,7 +8,7 @@
   <br>
     <a href="https://github.com/fsegurai/Ryujinx/actions/workflows/release.yml">
         <img src="https://github.com/fsegurai/Ryujinx/actions/workflows/release.yml/badge.svg"
-            alt="">
+            alt="Build Status">
     </a>
     <a href="https://github.com/fsegurai/Ryujinx/releases/latest">
         <img src="https://img.shields.io/github/v/release/fsegurai/Ryujinx"

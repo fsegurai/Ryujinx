@@ -34,9 +34,6 @@ jobs:
     name: Create tag
     runs-on: ubuntu-20.04
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Get version info
         id: version_info
         run: |
@@ -83,7 +80,7 @@ jobs:
           global-json-file: global.json
 
       - name: Cache .NET packages
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/global.json') }}
@@ -116,36 +113,20 @@ jobs:
 
       - name: Publish
         run: |
-          dotnet publish -c Release -r "${{ matrix.platform.name }}" -o ./publish_ava/publish -p:Version="${{ steps.version_info.outputs.build_version }}" -p:SourceRevisionId="${{ steps.version_info.outputs.git_short_hash }}" -p:DebugType=embedded src/Ryujinx --self-contained true
-          dotnet publish -c Release -r "${{ matrix.platform.name }}" -o ./publish_sdl2_headless/publish -p:Version="${{ steps.version_info.outputs.build_version }}" -p:SourceRevisionId="${{ steps.version_info.outputs.git_short_hash }}" -p:DebugType=embedded src/Ryujinx.Headless.SDL2 --self-contained true
+          dotnet publish -c Release -r "${{ matrix.platform.name }}" -o ./publish -p:Version="${{ steps.version_info.outputs.build_version }}" -p:SourceRevisionId="${{ steps.version_info.outputs.git_short_hash }}" -p:DebugType=embedded src/Ryujinx --self-contained -p:IncludeNativeLibrariesForSelfExtract=true
+          dotnet publish -c Release -r "${{ matrix.platform.name }}" -o ./publish_sdl2_headless -p:Version="${{ steps.version_info.outputs.build_version }}" -p:SourceRevisionId="${{ steps.version_info.outputs.git_short_hash }}" -p:DebugType=embedded src/Ryujinx.Headless.SDL2 --self-contained -p:IncludeNativeLibrariesForSelfExtract=true
 
       - name: Packing Windows builds
         if: matrix.platform.os == 'windows-latest'
         run: |
-          pushd publish_ava
-          rm publish/libarmeilleure-jitsupport.dylib
-          7z a ../release_output/ryujinx-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.zip publish
+          pushd publish
+          rm libarmeilleure-jitsupport.dylib
+          7z a ../release_output/ryujinx-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.zip ../publish
           popd
 
           pushd publish_sdl2_headless
-          rm publish/libarmeilleure-jitsupport.dylib
-          7z a ../release_output/sdl2-ryujinx-headless-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.zip publish
-          popd
-        shell: bash
-
-      - name: Packing Linux builds
-        if: matrix.platform.os == 'ubuntu-latest'
-        run: |
-          pushd publish_ava
-          rm publish/libarmeilleure-jitsupport.dylib
-          chmod +x publish/Ryujinx.sh publish/Ryujinx
-          tar -czvf ../release_output/ryujinx-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.tar.gz publish
-          popd
-
-          pushd publish_sdl2_headless
-          rm publish/libarmeilleure-jitsupport.dylib
-          chmod +x publish/Ryujinx.sh publish/Ryujinx.Headless.SDL2
-          tar -czvf ../release_output/sdl2-ryujinx-headless-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.tar.gz publish
+          rm libarmeilleure-jitsupport.dylib
+          7z a ../release_output/sdl2-ryujinx-headless-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.zip ../publish
           popd
         shell: bash
 
@@ -178,12 +159,27 @@ jobs:
           fi
 
           export UFLAG="gh-releases-zsync|${{ github.repository_owner }}|${{ github.event.repository.name }}|latest|*-$ARCH_NAME.AppImage.zsync"
-          BUILDDIR=publish_ava OUTDIR=publish_ava_appimage distribution/linux/appimage/build-appimage.sh
+          BUILDDIR=publish OUTDIR=publish_appimage distribution/linux/appimage/build-appimage.sh
 
-          # Add to release output
-          pushd publish_ava_appimage
+          pushd publish_appimage
           mv Ryujinx.AppImage ../release_output/ryujinx-$BUILD_VERSION-$ARCH_NAME.AppImage
           mv Ryujinx.AppImage.zsync ../release_output/ryujinx-$BUILD_VERSION-$ARCH_NAME.AppImage.zsync
+          popd
+        shell: bash
+
+      - name: Packing Linux builds
+        if: matrix.platform.os == 'ubuntu-latest'
+        run: |
+          pushd publish
+          rm libarmeilleure-jitsupport.dylib
+          chmod +x Ryujinx.sh Ryujinx
+          tar -czvf ../release_output/ryujinx-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.tar.gz ../publish
+          popd
+
+          pushd publish_sdl2_headless
+          rm libarmeilleure-jitsupport.dylib
+          chmod +x Ryujinx.sh Ryujinx.Headless.SDL2
+          tar -czvf ../release_output/sdl2-ryujinx-headless-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.tar.gz ../publish
           popd
         shell: bash
 
@@ -191,7 +187,6 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           name: ${{ steps.version_info.outputs.build_version }}
-          #artifacts: "release_output/*.tar.gz,release_output/*.zip"
           artifacts: "release_output/*.tar.gz,release_output/*.zip/*AppImage*"
           tag: ${{ steps.version_info.outputs.build_version }}
           body: "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.version_info.outputs.prev_build_version }}...${{ steps.version_info.outputs.build_version }}"
@@ -213,7 +208,7 @@ jobs:
           global-json-file: global.json
 
       - name: Cache .NET packages
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/global.json') }}
@@ -257,7 +252,7 @@ jobs:
       - name: Publish macOS Ryujinx
         run: |
           chmod +x ./distribution/macos/create_macos_build_ava.sh
-          ./distribution/macos/create_macos_build_ava.sh . publish_tmp_ava publish_ava ./distribution/macos/entitlements.xml "${{ steps.version_info.outputs.build_version }}" "${{ steps.version_info.outputs.git_short_hash }}" Release
+          ./distribution/macos/create_macos_build_ava.sh . publish_tmp_ava publish ./distribution/macos/entitlements.xml "${{ steps.version_info.outputs.build_version }}" "${{ steps.version_info.outputs.git_short_hash }}" Release
 
       - name: Publish macOS Ryujinx.Headless.SDL2
         run: |
@@ -268,7 +263,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           name: ${{ steps.version_info.outputs.build_version }}
-          artifacts: "publish_ava/*.tar.gz, publish_headless/*.tar.gz"
+          artifacts: "publish/*.tar.gz, publish_headless/*.tar.gz"
           tag: ${{ steps.version_info.outputs.build_version }}
           body: "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.version_info.outputs.prev_build_version }}...${{ steps.version_info.outputs.build_version }}"
           omitBodyDuringUpdate: true

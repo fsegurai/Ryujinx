@@ -14,13 +14,12 @@ jobs:
     if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v6
         with:
           script: |
             const {owner, repo} = context.repo;
-            const run_id = context.payload.workflow_run.id;
-            const pull_head_sha = context.payload.workflow_run.head_sha;
-
+            const run_id = ${{github.event.workflow_run.id}};
+            const pull_head_sha = '${{github.event.workflow_run.head_sha}}';
             const issue_number = await (async () => {
               const pulls = await github.rest.pulls.list({owner, repo});
               for await (const {data} of github.paginate.iterator(pulls)) {
@@ -36,7 +35,6 @@ jobs:
             } else {
               return core.error(`No matching pull request found`);
             }
-
             const {data: {artifacts}} = await github.rest.actions.listWorkflowRunArtifacts({owner, repo, run_id});
             if (!artifacts.length) {
               return core.error(`No artifacts found`);
@@ -57,7 +55,6 @@ jobs:
             hidden_debug_artifacts += `\n</details>`;
             body += hidden_headless_artifacts;
             body += hidden_debug_artifacts;
-
             const {data: comments} = await github.rest.issues.listComments({repo, owner, issue_number});
             const existing_comment = comments.find((c) => c.user.login === 'github-actions[bot]');
             if (existing_comment) {
@@ -66,3 +63,4 @@ jobs:
             } else {
               core.info(`Creating a comment`);
               await github.rest.issues.createComment({repo, owner, issue_number, body});
+            }
