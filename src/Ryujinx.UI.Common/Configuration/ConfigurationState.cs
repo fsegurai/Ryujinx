@@ -1612,9 +1612,7 @@ namespace Ryujinx.UI.Common.Configuration
             UI.ShownFileTypes.NCA.Value = configurationFileFormat.ShownFileTypes.NCA;
             UI.ShownFileTypes.NRO.Value = configurationFileFormat.ShownFileTypes.NRO;
             UI.ShownFileTypes.NSO.Value = configurationFileFormat.ShownFileTypes.NSO;
-            UI.EnableCustomTheme.Value = configurationFileFormat.EnableCustomTheme;
             UI.LanguageCode.Value = configurationFileFormat.LanguageCode;
-            UI.CustomThemePath.Value = configurationFileFormat.CustomThemePath;
             UI.BaseStyle.Value = configurationFileFormat.BaseStyle;
             UI.GameListViewMode.Value = configurationFileFormat.GameListViewMode;
             UI.ShowNames.Value = configurationFileFormat.ShowNames;
