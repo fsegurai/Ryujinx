@@ -2,8 +2,12 @@ name: Comment PR artifacts links
 
 on:
   workflow_run:
-    workflows: ['Build PR']
+    workflows: ["Build PR"]
     types: [completed]
+
+permissions:
+  pull-requests: write
+  issues: write
 
 jobs:
   pr_comment:
