@@ -5,21 +5,17 @@ on:
     workflows: ["Build PR"]
     types: [completed]
 
-permissions:
-  pull-requests: write
-  issues: write
-
 jobs:
   pr_comment:
     if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v6
         with:
           script: |
             const {owner, repo} = context.repo;
-            const run_id = context.payload.workflow_run.id;
-            const pull_head_sha = context.payload.workflow_run.head_sha;
+            const run_id = ${{github.event.workflow_run.id}};
+            const pull_head_sha = '${{github.event.workflow_run.head_sha}}';
 
             const issue_number = await (async () => {
               const pulls = await github.rest.pulls.list({owner, repo});
@@ -30,7 +26,6 @@ jobs:
                   }
                 }
               }
-              return null; // Ensure a value is returned if no matching pull request is found
             })();
             if (issue_number) {
               core.info(`Using pull request ${issue_number}`);
