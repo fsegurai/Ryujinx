@@ -61,8 +61,6 @@ namespace Ryujinx.Ava
                 ApplyConfiguredTheme(ConfigurationState.Instance.UI.BaseStyle);
 
                 ConfigurationState.Instance.UI.BaseStyle.Event += ThemeChanged_Event;
-                ConfigurationState.Instance.UI.CustomThemePath.Event += ThemeChanged_Event;
-                ConfigurationState.Instance.UI.EnableCustomTheme.Event += CustomThemeChanged_Event;
             }
         }
 
@@ -88,8 +86,6 @@ namespace Ryujinx.Ava
                 }
             });
         }
-
-        private void CustomThemeChanged_Event(object _, ReactiveEventArgs<bool> __) => ApplyConfiguredTheme(ConfigurationState.Instance.UI.BaseStyle);
 
         private void ThemeChanged_Event(object _, ReactiveEventArgs<string> rArgs) => ApplyConfiguredTheme(rArgs.NewValue);
 
