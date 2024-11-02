@@ -33,7 +33,7 @@
   Guides and documentation can be found on the <a href="https://github.com/fsegurai/Ryujinx/wiki">Wiki tab</a>.
 </p>
 <p align="center">
-  If you would like a version more preservative fork of Ryujinx, check out <a href="https://github.com/ryujinx-mirror/ryujinx">ryujinx-mirror</a>.
+  If you would like a version more preservative fork of Ryujinx, check out <a href="https://github.com/ryujinx-mirror/ryujinx">ryujinx-mirror</a> project.
 </p>
 
 <p align="center">
