@@ -5,6 +5,10 @@ on:
     workflows: ["Build PR"]
     types: [completed]
 
+permissions:
+  pull-requests: write
+  issues: write
+
 jobs:
   pr_comment:
     if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success'
@@ -16,7 +20,6 @@ jobs:
             const {owner, repo} = context.repo;
             const run_id = ${{github.event.workflow_run.id}};
             const pull_head_sha = '${{github.event.workflow_run.head_sha}}';
-
             const issue_number = await (async () => {
               const pulls = await github.rest.pulls.list({owner, repo});
               for await (const {data} of github.paginate.iterator(pulls)) {
@@ -32,7 +35,6 @@ jobs:
             } else {
               return core.error(`No matching pull request found`);
             }
-
             const {data: {artifacts}} = await github.rest.actions.listWorkflowRunArtifacts({owner, repo, run_id});
             if (!artifacts.length) {
               return core.error(`No artifacts found`);
@@ -53,7 +55,6 @@ jobs:
             hidden_debug_artifacts += `\n</details>`;
             body += hidden_headless_artifacts;
             body += hidden_debug_artifacts;
-
             const {data: comments} = await github.rest.issues.listComments({repo, owner, issue_number});
             const existing_comment = comments.find((c) => c.user.login === 'github-actions[bot]');
             if (existing_comment) {
