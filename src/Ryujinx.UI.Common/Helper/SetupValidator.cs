@@ -93,9 +93,8 @@ namespace Ryujinx.UI.Common.Helper
                     error = UserError.Success;
                     return true;
                 }
-
+                
                 return IsFirmwareValid(contentManager, out error);
-
             }
 
             error = UserError.ApplicationNotFound;

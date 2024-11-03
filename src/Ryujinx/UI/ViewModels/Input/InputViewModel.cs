@@ -94,9 +94,12 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
                 }
 
                 IsModified = false;
-                _playerId = Enum.IsDefined(typeof(PlayerIndex), value) ? value : PlayerIndex.Player1;
+                _playerId = value;
 
-                _isLoaded = false;
+                if (!Enum.IsDefined(typeof(PlayerIndex), _playerId))
+                {
+                    _playerId = PlayerIndex.Player1;
+                }
 
                 LoadConfiguration();
                 LoadDevice();
@@ -113,11 +116,41 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
             get => _controller;
             set
             {
-                _controller = value == -1 ? 0 : value;
+                _controller = value;
+
+                if (_controller == -1)
+                {
+                    _controller = 0;
+                }
 
                 if (Controllers.Count > 0 && value < Controllers.Count && _controller > -1)
                 {
-                    UpdateControllerImage(Controllers[_controller].Type);
+                    ControllerType controller = Controllers[_controller].Type;
+
+                    IsLeft = true;
+                    IsRight = true;
+
+                    switch (controller)
+                    {
+                        case ControllerType.Handheld:
+                            ControllerImage = JoyConPairResource;
+                            break;
+                        case ControllerType.ProController:
+                            ControllerImage = ProControllerResource;
+                            break;
+                        case ControllerType.JoyconPair:
+                            ControllerImage = JoyConPairResource;
+                            break;
+                        case ControllerType.JoyconLeft:
+                            ControllerImage = JoyConLeftResource;
+                            IsRight = false;
+                            break;
+                        case ControllerType.JoyconRight:
+                            ControllerImage = JoyConRightResource;
+                            IsLeft = false;
+                            break;
+                    }
+
                     LoadInputDriver();
                     LoadProfiles();
                 }
@@ -174,7 +207,9 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
                 _device = value < 0 ? 0 : value;
 
                 if (_device >= Devices.Count)
+                {
                     return;
+                }
 
                 var selected = Devices[_device].Type;
 
@@ -228,11 +263,6 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
 
             ControllerImage = ProControllerResource;
 
-            InitializePlayerIndexes();
-        }
-
-        private void InitializePlayerIndexes()
-        {
             PlayerIndexes.Add(new(PlayerIndex.Player1, LocaleManager.Instance[LocaleKeys.ControllerSettingsPlayer1]));
             PlayerIndexes.Add(new(PlayerIndex.Player2, LocaleManager.Instance[LocaleKeys.ControllerSettingsPlayer2]));
             PlayerIndexes.Add(new(PlayerIndex.Player3, LocaleManager.Instance[LocaleKeys.ControllerSettingsPlayer3]));
@@ -267,24 +297,44 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
             }
             else
             {
-                var type = Config is StandardKeyboardInputConfig ? DeviceType.Keyboard : DeviceType.Controller;
+                var type = DeviceType.None;
+
+                if (Config is StandardKeyboardInputConfig)
+                {
+                    type = DeviceType.Keyboard;
+                }
+
+                if (Config is StandardControllerInputConfig)
+                {
+                    type = DeviceType.Controller;
+                }
 
                 var item = Devices.FirstOrDefault(x => x.Type == type && x.Id == Config.Id);
-
-                Device = item != default ? Devices.ToList().FindIndex(x => x.Id == item.Id) : 0;
+                if (item != default)
+                {
+                    Device = Devices.ToList().FindIndex(x => x.Id == item.Id);
+                }
+                else
+                {
+                    Device = 0;
+                }
             }
         }
 
         private void LoadInputDriver()
         {
             if (_device < 0)
+            {
                 return;
+            }
 
             string id = GetCurrentGamepadId();
             var type = Devices[Device].Type;
 
             if (type == DeviceType.None)
+            {
                 return;
+            }
 
             if (type == DeviceType.Keyboard)
             {
@@ -317,11 +367,18 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
         private string GetCurrentGamepadId()
         {
             if (_device < 0)
+            {
                 return string.Empty;
+            }
 
             var device = Devices[Device];
 
-            return device.Type == DeviceType.None ? null : device.Id.Split(" ")[0];
+            if (device.Type == DeviceType.None)
+            {
+                return null;
+            }
+
+            return device.Id.Split(" ")[0];
         }
 
         public void LoadControllers()
@@ -352,39 +409,17 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
             }
         }
 
-        private void UpdateControllerImage(ControllerType controller)
-        {
-            IsLeft = true;
-            IsRight = true;
-
-            switch (controller)
-            {
-                case ControllerType.Handheld:
-                    ControllerImage = JoyConPairResource;
-                    break;
-                case ControllerType.ProController:
-                    ControllerImage = ProControllerResource;
-                    break;
-                case ControllerType.JoyconPair:
-                    ControllerImage = JoyConPairResource;
-                    break;
-                case ControllerType.JoyconLeft:
-                    ControllerImage = JoyConLeftResource;
-                    IsRight = false;
-                    break;
-                case ControllerType.JoyconRight:
-                    ControllerImage = JoyConRightResource;
-                    IsLeft = false;
-                    break;
-            }
-        }
-
         private static string GetShortGamepadName(string str)
         {
             const string Ellipsis = "...";
             const int MaxSize = 50;
 
-            return str.Length > MaxSize ? $"{str.AsSpan(0, MaxSize - Ellipsis.Length)}{Ellipsis}" : str;
+            if (str.Length > MaxSize)
+            {
+                return $"{str.AsSpan(0, MaxSize - Ellipsis.Length)}{Ellipsis}";
+            }
+
+            return str;
         }
 
         private static string GetShortGamepadId(string str)
@@ -397,7 +432,10 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
 
         public void LoadDevices()
         {
-            string GetGamepadName(IGamepad gamepad, int controllerNumber) => $"{GetShortGamepadName(gamepad.Name)} ({controllerNumber})";
+            string GetGamepadName(IGamepad gamepad, int controllerNumber)
+            {
+                return $"{GetShortGamepadName(gamepad.Name)} ({controllerNumber})";
+            }
             string GetUniqueGamepadName(IGamepad gamepad, ref int controllerNumber)
             {
                 string name = GetGamepadName(gamepad, controllerNumber);

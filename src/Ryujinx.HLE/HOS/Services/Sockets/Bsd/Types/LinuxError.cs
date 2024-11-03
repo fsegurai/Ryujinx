@@ -1,5 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Ryujinx.HLE.HOS.Services.Sockets.Bsd.Types
 {
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
     enum LinuxError
     {
         SUCCESS = 0,
