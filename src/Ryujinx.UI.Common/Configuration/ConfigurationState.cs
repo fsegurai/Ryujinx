@@ -807,7 +807,7 @@ namespace Ryujinx.UI.Common.Configuration
             Logger.EnableTrace.Value = false;
             Logger.EnableGuest.Value = true;
             Logger.EnableFsAccessLog.Value = false;
-            Logger.FilteredClasses.Value = Array.Empty<LogClass>();
+            Logger.FilteredClasses.Value = [];
             Logger.GraphicsDebugLevel.Value = GraphicsDebugLevel.None;
             System.Language.Value = Language.AmericanEnglish;
             System.Region.Value = Region.USA;
@@ -854,8 +854,8 @@ namespace Ryujinx.UI.Common.Configuration
             UI.GuiColumns.PathColumn.Value = true;
             UI.ColumnSort.SortColumnId.Value = 0;
             UI.ColumnSort.SortAscending.Value = false;
-            UI.GameDirs.Value = new List<string>();
-            UI.AutoloadDirs.Value = new List<string>();
+            UI.GameDirs.Value = [];
+            UI.AutoloadDirs.Value = [];
             UI.ShownFileTypes.NSP.Value = true;
             UI.ShownFileTypes.PFS0.Value = true;
             UI.ShownFileTypes.XCI.Value = true;

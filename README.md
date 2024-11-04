@@ -4,8 +4,6 @@
   <br>
   <b>Ryujinx</b>
   <br>
-  <sub><sup><b>(REE-YOU-JINX)</b></sup></sub>
-  <br>
     <a href="https://github.com/fsegurai/Ryujinx/actions/workflows/release.yml">
         <img src="https://github.com/fsegurai/Ryujinx/actions/workflows/release.yml/badge.svg"
             alt="Build Status">
@@ -15,6 +13,12 @@
             alt="Latest Release">
     </a>
 </h1>
+
+<p align="center">
+  <em>
+    This is just a side project to provide additional features that fulfill my needs.
+  </em>
+</p>
 
 <p align="center">
   Ryujinx is an open-source Nintendo Switch emulator, originally created by gdkchan, written in C#.

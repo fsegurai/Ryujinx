@@ -116,12 +116,7 @@ namespace Ryujinx.Graphics.Vulkan
 
             // Any device running on MacOS is using MoltenVK, even Intel and AMD vendors.
             if (IsMoltenVk = OperatingSystem.IsMacOS())
-            {
                 MVKInitialization.Initialize();
-
-                // Any device running on MacOS is using MoltenVK, even Intel and AMD vendors.
-                IsMoltenVk = true;
-            }
         }
 
         public static VulkanRenderer Create(

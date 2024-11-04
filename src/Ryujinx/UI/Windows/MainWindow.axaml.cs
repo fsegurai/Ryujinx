@@ -22,7 +22,6 @@ using Ryujinx.HLE.HOS;
 using Ryujinx.HLE.HOS.Services.Account.Acc;
 using Ryujinx.Input.HLE;
 using Ryujinx.Input.SDL2;
-using Ryujinx.Modules;
 using Ryujinx.UI.App.Common;
 using Ryujinx.UI.Common;
 using Ryujinx.UI.Common.Configuration;
@@ -99,7 +98,7 @@ namespace Ryujinx.Ava.UI.Windows
                 InputManager = new InputManager(new AvaloniaKeyboardDriver(this), new SDL2GamepadDriver());
 
                 _ = this.GetObservable(IsActiveProperty).Subscribe(it => ViewModel.IsActive = it);
-                ScalingChanged += OnScalingChanged;
+                this.ScalingChanged += OnScalingChanged;
             }
         }
 
@@ -472,7 +471,7 @@ namespace Ryujinx.Ava.UI.Windows
             {
                 LoadApplications();
             }
-
+            
             _ = CheckLaunchState();
         }
 
@@ -602,26 +601,13 @@ namespace Ryujinx.Ava.UI.Windows
         {
             switch (fileType)
             {
-                case "NSP":
-                    ConfigurationState.Instance.UI.ShownFileTypes.NSP.Toggle();
-                    break;
-                case "PFS0":
-                    ConfigurationState.Instance.UI.ShownFileTypes.PFS0.Toggle();
-                    break;
-                case "XCI":
-                    ConfigurationState.Instance.UI.ShownFileTypes.XCI.Toggle();
-                    break;
-                case "NCA":
-                    ConfigurationState.Instance.UI.ShownFileTypes.NCA.Toggle();
-                    break;
-                case "NRO":
-                    ConfigurationState.Instance.UI.ShownFileTypes.NRO.Toggle();
-                    break;
-                case "NSO":
-                    ConfigurationState.Instance.UI.ShownFileTypes.NSO.Toggle();
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(fileType);
+                case "NSP": ConfigurationState.Instance.UI.ShownFileTypes.NSP.Toggle(); break;
+                case "PFS0": ConfigurationState.Instance.UI.ShownFileTypes.PFS0.Toggle(); break;
+                case "XCI": ConfigurationState.Instance.UI.ShownFileTypes.XCI.Toggle(); break;
+                case "NCA": ConfigurationState.Instance.UI.ShownFileTypes.NCA.Toggle(); break;
+                case "NRO": ConfigurationState.Instance.UI.ShownFileTypes.NRO.Toggle(); break;
+                case "NSO": ConfigurationState.Instance.UI.ShownFileTypes.NSO.Toggle(); break;
+                default: throw new ArgumentOutOfRangeException(fileType);
             }
 
             ConfigurationState.Instance.ToFileFormat().SaveConfig(Program.ConfigurationPath);
@@ -680,10 +666,10 @@ namespace Ryujinx.Ava.UI.Windows
                 await ContentDialogHelper.ShowTextDialog(
                     LocaleManager.Instance[LocaleKeys.DialogConfirmationTitle],
                     msg,
-                    string.Empty,
-                    string.Empty,
-                    string.Empty,
-                    LocaleManager.Instance[LocaleKeys.InputDialogOk],
+                    string.Empty, 
+                    string.Empty, 
+                    string.Empty, 
+                    LocaleManager.Instance[LocaleKeys.InputDialogOk], 
                     (int)Symbol.Checkmark);
             });
         }

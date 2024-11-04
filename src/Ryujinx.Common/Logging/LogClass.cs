@@ -72,6 +72,5 @@ namespace Ryujinx.Common.Logging
         TamperMachine,
         UI,
         Vic,
-        XCIFileTrimmer
     }
 }
