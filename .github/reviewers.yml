@@ -12,6 +12,7 @@ horizon:
 
 infra:
   - fsegurai
+  - dependabot[bot]'
 
 default:
   - '@developers'
