@@ -2,9 +2,9 @@ name: Release job
 
 on:
   workflow_dispatch:
-    inputs: {}
+    inputs: { }
   push:
-    branches: [main]
+    branches: [ main ]
     paths-ignore:
       - ".github/**"
       - "docs/**"
@@ -254,7 +254,7 @@ jobs:
       - name: Publish macOS Ryujinx
         run: |
           chmod +x ./distribution/macos/create_macos_build_ava.sh
-          ./distribution/macos/create_macos_build_ava.sh . publish_tmp_ava publish ./distribution/macos/entitlements.xml "${{ steps.version_info.outputs.build_version }}" "${{ steps.version_info.outputs.git_short_hash }}" Release
+          ./distribution/macos/create_macos_build_ava.sh . publish_tmp_ava publish_ava ./distribution/macos/entitlements.xml "${{ steps.version_info.outputs.build_version }}" "${{ steps.version_info.outputs.git_short_hash }}" Release
 
       - name: Publish macOS Ryujinx.Headless.SDL2
         run: |

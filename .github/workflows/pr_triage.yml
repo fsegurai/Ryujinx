@@ -1,7 +1,7 @@
 name: "Pull Request Triage"
 on:
   pull_request_target:
-    types: [opened, ready_for_review]
+    types: [ opened, ready_for_review ]
 
 jobs:
   triage:
@@ -16,10 +16,10 @@ jobs:
       - name: Fetch sources
         uses: actions/checkout@v4
         with:
-           # Ensure we pin the source origin as pull_request_target run under forks.
-           fetch-depth: 0
-           repository: fsegurai/Ryujinx
-           ref: main
+          # Ensure we pin the source origin as pull_request_target run under forks.
+          fetch-depth: 0
+          repository: fsegurai/Ryujinx
+          ref: main
 
       - name: Update labels based on changes
         uses: actions/labeler@v5
