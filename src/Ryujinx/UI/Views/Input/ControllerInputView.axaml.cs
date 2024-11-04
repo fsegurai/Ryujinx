@@ -4,14 +4,11 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
-using DiscordRPC;
 using Ryujinx.Ava.UI.Helpers;
 using Ryujinx.Ava.UI.ViewModels.Input;
 using Ryujinx.Common.Configuration.Hid.Controller;
-using Ryujinx.Common.Logging;
 using Ryujinx.Input;
 using Ryujinx.Input.Assigner;
-using System;
 using StickInputId = Ryujinx.Common.Configuration.Hid.Controller.StickInputId;
 
 namespace Ryujinx.Ava.UI.Views.Input
@@ -30,16 +27,6 @@ namespace Ryujinx.Ava.UI.Views.Input
                 {
                     button.IsCheckedChanged += Button_IsCheckedChanged;
                 }
-                
-                if (visual is CheckBox check)
-                {
-                    check.IsCheckedChanged += CheckBox_IsCheckedChanged;
-                }
-
-                if (visual is Slider slider)
-                {
-                    slider.PropertyChanged += Slider_IsCheckedChanged;
-                }
             }
         }
 
@@ -50,48 +37,6 @@ namespace Ryujinx.Ava.UI.Views.Input
             if (_currentAssigner != null && _currentAssigner.ToggledButton != null && !_currentAssigner.ToggledButton.IsPointerOver)
             {
                 _currentAssigner.Cancel();
-            }
-        }
-        
-        private float _changeSlider = -1.0f;
-
-        private void Slider_IsCheckedChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
-        {
-            if (sender is Slider check)
-            {
-                if ((bool)check.IsPointerOver && _changeSlider == -1.0f)
-                {
-                    _changeSlider = (float)check.Value;
-                    
-                }
-                else if (!(bool)check.IsPointerOver)
-                {
-                    _changeSlider = -1.0f;
-                }
-
-                if (_changeSlider != -1.0f && _changeSlider != (float)check.Value)
-                {
-
-                    var viewModel = (DataContext as ControllerInputViewModel);
-                    viewModel.ParentModel.IsModified = true;
-                    //Logger.Notice.Print(LogClass.Application, $"IsEnabled: {temp}\" \"{check.Value} {check.IsPointerOver}");
-                    _changeSlider = (float)check.Value;
-                }
-            }
-        }
-        
-        private void CheckBox_IsCheckedChanged(object sender, RoutedEventArgs e)
-        {
-            if (sender is CheckBox check)
-            {
-                if ((bool)check.IsPointerOver)
-                {
-
-                    var viewModel = (DataContext as ControllerInputViewModel);
-                    viewModel.ParentModel.IsModified = true;
-                    _currentAssigner?.Cancel();
-                    _currentAssigner = null;
-                }
             }
         }
 
