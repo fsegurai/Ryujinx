@@ -400,6 +400,12 @@ namespace Ryujinx.Ava.UI.Windows
             {
                 WindowStartupLocation = WindowStartupLocation.CenterScreen;
             }
+            
+            // Explicitly set the window position on Linux
+            if (OperatingSystem.IsLinux())
+            {
+                Arrange(new Rect(savedPoint.X, savedPoint.Y, ViewModel.WindowWidth, ViewModel.WindowHeight));
+            }
         }
 
         private bool CheckScreenBounds(PixelPoint configPoint)
