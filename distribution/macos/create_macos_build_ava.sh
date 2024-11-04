@@ -50,6 +50,7 @@ rm -rf "$TEMP_DIRECTORY/publish_x64/libarmeilleure-jitsupport.dylib"
 rm -rf "$TEMP_DIRECTORY/publish_arm64/libsoundio.dylib"
 
 pushd "$BASE_DIR/distribution/macos"
+chmod +x ./create_app_bundle.sh  # Add this line to ensure the script is executable
 ./create_app_bundle.sh "$TEMP_DIRECTORY/publish_x64" "$TEMP_DIRECTORY/output_x64" "$ENTITLEMENTS_FILE_PATH"
 ./create_app_bundle.sh "$TEMP_DIRECTORY/publish_arm64" "$TEMP_DIRECTORY/output_arm64" "$ENTITLEMENTS_FILE_PATH"
 popd
