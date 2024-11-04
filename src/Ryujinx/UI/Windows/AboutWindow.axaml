@@ -50,13 +50,6 @@
                                 Width="110"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center" />
-                            <TextBlock
-                                FontSize="11"
-                                Text="(REE-YOU-JINX)"
-                                TextAlignment="Start"
-                                Width="110"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center" />
                         </WrapPanel>
                     </StackPanel>
                 </Grid>
@@ -112,19 +105,6 @@
                         CornerRadius="15"
                         ToolTip.Tip="{ext:Locale AboutGithubUrlTooltipMessage}">
                         <Image Source="{Binding GithubLogo}" />
-                    </Button>
-                    <Button
-                        MinWidth="30"
-                        MinHeight="30"
-                        MaxWidth="30"
-                        MaxHeight="30"
-                        Padding="8"
-                        Background="Transparent"
-                        Click="Button_OnClick"
-                        CornerRadius="15"
-                        Tag="https://discord.gg/dHPrkBkkyA"
-                        ToolTip.Tip="{ext:Locale AboutDiscordUrlTooltipMessage}">
-                        <Image Source="{Binding DiscordLogo}" />
                     </Button>
                 </StackPanel>
             </StackPanel>
