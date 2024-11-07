@@ -42,9 +42,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <TargetPath>THIRDPARTY.md</TargetPath>
     </Content>
-    <Content Include="..\..\LICENSE.txt">
+    <Content Include="..\..\LICENSE">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <TargetPath>LICENSE.txt</TargetPath>
+      <TargetPath>LICENSE</TargetPath>
     </Content>
   </ItemGroup>
 
