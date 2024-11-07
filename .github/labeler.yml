@@ -32,7 +32,19 @@ kernel:
 
 infra:
   - changed-files:
-      - any-glob-to-any-file: [ '.github/**', 'distribution/**', 'Directory.Packages.props' ]
+      - any-glob-to-any-file: [ '.github/**', 'distribution/**' ]
+
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file: [ 'Directory.Packages.props' ]
+
+ci-cd:
+  - changed-files:
+      - any-glob-to-any-file: [
+        '.github/workflows/**',
+        'Dockerfile',
+        'Jenkinsfile',
+      ]
 
 assets:
   - changed-files:
