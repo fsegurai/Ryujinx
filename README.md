@@ -1,18 +1,30 @@
-<h1 align="center">
-  <br>
+<p align="center">
   <img src="https://raw.githubusercontent.com/fsegurai/Ryujinx/refs/heads/main/distribution/misc/Logo.svg" alt="Ryujinx" width="150"></a>
-  <br>
-  <b>Ryujinx</b>
-  <br>
-    <a href="https://github.com/fsegurai/Ryujinx/actions/workflows/release.yml">
-        <img src="https://github.com/fsegurai/Ryujinx/actions/workflows/release.yml/badge.svg"
-            alt="Build Status">
-    </a>
-    <a href="https://github.com/fsegurai/Ryujinx/releases/latest">
-        <img src="https://img.shields.io/github/v/release/fsegurai/Ryujinx"
-            alt="Latest Release">
-    </a>
+</p>
+
+<h1 align="center">
+  Ryujinx
 </h1>
+
+<p align="center">
+  <a href="https://github.com/fsegurai/Ryujinx/actions/workflows/release.yml">
+      <img src="https://github.com/fsegurai/Ryujinx/actions/workflows/release.yml/badge.svg"
+          alt="Build Status">
+  </a>
+  <a href="https://github.com/fsegurai/Ryujinx/releases/latest">
+      <img src="https://img.shields.io/github/v/release/fsegurai/Ryujinx"
+          alt="Latest Release">
+  </a>
+  <br>
+  <img alt="GitHub contributors" src="https://img.shields.io/github/contributors/fsegurai/Ryujinx">
+  <img alt="Dependency status for repo" src="https://img.shields.io/librariesio/github/fsegurai/Ryujinx">
+  <a href="https://opensource.org/licenses/MIT">
+    <img alt="GitHub License" src="https://img.shields.io/github/license/fsegurai/Ryujinx">
+  </a>
+  <br>
+  <img alt="Stars" src="https://img.shields.io/github/stars/fsegurai/Ryujinx?style=square&labelColor=343b41"/> 
+  <img alt="Forks" src="https://img.shields.io/github/forks/fsegurai/Ryujinx?style=square&labelColor=343b41"/>
+</p>
 
 <p align="center">
   <em>
@@ -136,9 +148,9 @@ This folder is located in the user folder, which can be accessed by clicking `Op
 
 ## License
 
-This software is licensed under the terms of the [MIT license](LICENSE.txt).
+This software is licensed under the terms of the [MIT license](LICENSE).
 This project makes use of code authored by the libvpx project, licensed under BSD and the ffmpeg project, licensed under LGPLv3.
-See [LICENSE.txt](LICENSE.txt) and [THIRDPARTY.md](distribution/legal/THIRDPARTY.md) for more details.
+See [LICENSE](LICENSE) and [THIRDPARTY.md](distribution/legal/THIRDPARTY.md) for more details.
 
 ## Credits
 
