@@ -38,6 +38,6 @@ assets:
   - changed-files:
       - any-glob-to-any-file: [ 'assets/**' ]
 
-documentation :
+documentation:
   - changed-files:
-      - any-glob-to-any-file: [ 'docs/**', 'CONTRIBUTING.md', 'LICENSE', 'README.md' ]
+      - any-glob-to-any-file: [ 'docs/**', 'CHANGELOG.md', 'CONTRIBUTING.md', 'LICENSE', 'README.md' ]
