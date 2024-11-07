@@ -26,3 +26,29 @@ jobs:
         with:
           sync-labels: true
           dot: true
+
+      - name: Assign PR creator
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const assignees = pr.assignees.map(assignee => assignee.login);
+            let assignee = pr.user.login;
+
+            if (!assignees.includes(assignee)) {
+              if (assignee.includes('bot')) {
+                await github.rest.pulls.requestReviewers({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: pr.number,
+                  reviewers: ['fsegurai']
+                });
+              } else {
+                await github.rest.issues.addAssignees({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                  assignees: [assignee]
+                });
+              }
+            }

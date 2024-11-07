@@ -16,7 +16,7 @@ We always welcome bug reports, feature proposals and overall feedback. Here are 
 
 Before filing a new issue, please search our [open issues](https://github.com/fsegurai/Ryujinx/issues) to check if it already exists.
 
-If you do find an existing issue, please include your own feedback in the discussion. Do consider upvoting (👍 reaction) the original post, as this helps us prioritize popular issues in our backlog.
+If you do find an existing issue, please include your own feedback in the discussion. Do consider up voting (👍 reaction) the original post, as this helps us prioritize popular issues in our backlog.
 
 ### Writing a Good Feature Request
 
