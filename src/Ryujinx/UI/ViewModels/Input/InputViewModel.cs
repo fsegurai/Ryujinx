@@ -44,6 +44,7 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
         private readonly MainWindow _mainWindow;
 
         private PlayerIndex _playerId;
+        private PlayerIndex _playerIdChoose;
         private int _controller;
         private string _controllerImage;
         private int _device;
@@ -82,6 +83,12 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
                 OnPropertyChanged();
             }
         }
+        
+        public PlayerIndex PlayerIdChoose
+        {
+            get => _playerIdChoose;
+            set { }
+        }
 
         public PlayerIndex PlayerId
         {
@@ -90,6 +97,7 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
             {
                 if (IsModified)
                 {
+                    _playerIdChoose = value;
                     return;
                 }
 
@@ -100,6 +108,8 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
                 {
                     _playerId = PlayerIndex.Player1;
                 }
+                
+                _isLoaded = false;
 
                 LoadConfiguration();
                 LoadDevice();
