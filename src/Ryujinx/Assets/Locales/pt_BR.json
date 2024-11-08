@@ -534,6 +534,7 @@
   "AboutAmiiboDisclaimerMessage": "AmiiboAPI (www.amiiboapi.com) é usado\nem nossa emulação de Amiibo.",
   "AboutPatreonUrlTooltipMessage": "Clique para abrir a página do Patreon do Ryujinx no seu navegador padrão.",
   "AboutGithubUrlTooltipMessage": "Clique para abrir a página do GitHub do Ryujinx no seu navegador padrão.",
+  "AboutDiscordUrlTooltipMessage": "Clique para abrir um convite ao servidor do Discord do Ryujinx no seu navegador padrão.",
   "AboutRyujinxAboutTitle": "Sobre:",
   "AboutRyujinxAboutContent": "Ryujinx é um emulador de Nintendo Switch™.\nDesenvolvedores com interesse em contribuir podem conseguir mais informações no GitHub ou Discord.",
   "AboutRyujinxMaintainersTitle": "Mantido por:",
