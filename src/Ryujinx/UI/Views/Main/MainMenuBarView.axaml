@@ -13,9 +13,9 @@
     </Design.DataContext>
     <DockPanel HorizontalAlignment="Stretch">
         <Border Name="RyuLogo" Padding="7, 0, 0, 0" VerticalAlignment="Center" HorizontalAlignment="Center">
-            <Image 
-                ToolTip.Tip="{Binding Title}" 
-                Height="25" 
+            <Image
+                ToolTip.Tip="{Binding Title}"
+                Height="25"
                 Width="25"
                 Source="resm:Ryujinx.UI.Common.Resources.Logo_Ryujinx.png?assembly=Ryujinx.UI.Common" />
         </Border>
@@ -55,7 +55,8 @@
                     Icon="{ext:Icon fa-solid fa-code-compare}"
                     IsEnabled="{Binding EnableNonGameRunningControls}"
                     ToolTip.Tip="{ext:Locale LoadTitleUpdatesFromFolderTooltip}" />
-                <MenuItem Header="{ext:Locale MenuBarFileOpenApplet}" IsEnabled="{Binding IsAppletMenuActive}" Icon="{ext:Icon mdi-launch}">
+                <MenuItem Header="{ext:Locale MenuBarFileOpenApplet}" IsEnabled="{Binding IsAppletMenuActive}"
+                          Icon="{ext:Icon mdi-launch}">
                     <MenuItem
                         Click="OpenMiiApplet"
                         Header="Mii Edit Applet"
@@ -144,9 +145,9 @@
                         </Style>
                     </MenuItem.Styles>
                 </MenuItem>
-                <Separator/>
+                <Separator />
                 <MenuItem
-                    Name="ChangeLanguageMenuItem" 
+                    Name="ChangeLanguageMenuItem"
                     Padding="0"
                     Header="{ext:Locale MenuBarOptionsChangeLanguage}"
                     Icon="{ext:Icon fa-solid fa-language}">
@@ -162,8 +163,8 @@
                         </Style>
                     </MenuItem.Styles>
                 </MenuItem>
-                <MenuItem 
-                    Name="ToggleFileTypesMenuItem" 
+                <MenuItem
+                    Name="ToggleFileTypesMenuItem"
                     Padding="-10,0,0,0"
                     Header="{ext:Locale MenuBarShowFileTypes}" />
                 <Separator />
@@ -231,7 +232,8 @@
                     InputGesture="Escape"
                     IsEnabled="{Binding IsGameRunning}"
                     ToolTip.Tip="{ext:Locale StopEmulationTooltip}" />
-                <MenuItem Command="{Binding SimulateWakeUpMessage}" Header="{ext:Locale MenuBarOptionsSimulateWakeUpMessage}" />
+                <MenuItem Command="{Binding SimulateWakeUpMessage}"
+                          Header="{ext:Locale MenuBarOptionsSimulateWakeUpMessage}" />
                 <Separator />
                 <MenuItem
                     Name="ScanAmiiboMenuItem"
@@ -260,19 +262,29 @@
                     IsEnabled="{Binding IsGameRunning}" />
             </MenuItem>
             <MenuItem VerticalAlignment="Center" Header="{ext:Locale MenuBarTools}">
-                <MenuItem Header="{ext:Locale MenuBarToolsInstallFirmware}" Icon="{ext:Icon fa-solid fa-download}" IsEnabled="{Binding EnableNonGameRunningControls}">
-                    <MenuItem Command="{Binding InstallFirmwareFromFile}" Header="{ext:Locale MenuBarFileToolsInstallFirmwareFromFile}" Icon="{ext:Icon mdi-file-cog}" />
-                    <MenuItem Command="{Binding InstallFirmwareFromFolder}" Header="{ext:Locale MenuBarFileToolsInstallFirmwareFromDirectory}" Icon="{ext:Icon mdi-folder-cog}" />
+                <MenuItem Header="{ext:Locale MenuBarToolsInstallFirmware}" Icon="{ext:Icon fa-solid fa-download}"
+                          IsEnabled="{Binding EnableNonGameRunningControls}">
+                    <MenuItem Command="{Binding InstallFirmwareFromFile}"
+                              Header="{ext:Locale MenuBarFileToolsInstallFirmwareFromFile}"
+                              Icon="{ext:Icon mdi-file-cog}" />
+                    <MenuItem Command="{Binding InstallFirmwareFromFolder}"
+                              Header="{ext:Locale MenuBarFileToolsInstallFirmwareFromDirectory}"
+                              Icon="{ext:Icon mdi-folder-cog}" />
                 </MenuItem>
-                <MenuItem Header="{ext:Locale MenuBarToolsManageFileTypes}" IsVisible="{Binding ManageFileTypesVisible}">
-                    <MenuItem Header="{ext:Locale MenuBarToolsInstallFileTypes}" Click="InstallFileTypes_Click"/>
-                    <MenuItem Header="{ext:Locale MenuBarToolsUninstallFileTypes}" Click="UninstallFileTypes_Click"/>
+                <MenuItem Header="{ext:Locale MenuBarToolsManageFileTypes}"
+                          IsVisible="{Binding ManageFileTypesVisible}">
+                    <MenuItem Header="{ext:Locale MenuBarToolsInstallFileTypes}" Click="InstallFileTypes_Click" />
+                    <MenuItem Header="{ext:Locale MenuBarToolsUninstallFileTypes}" Click="UninstallFileTypes_Click" />
                 </MenuItem>
+                <Separator />
+                <MenuItem Header="{ext:Locale MenuBarToolsXCITrimmer}" Click="OpenXCITrimmerWindow"
+                          Icon="{ext:Icon fa-solid fa-scissors}" />
             </MenuItem>
             <MenuItem VerticalAlignment="Center" Header="{ext:Locale MenuBarView}">
                 <MenuItem VerticalAlignment="Center" Header="{ext:Locale MenuBarViewWindow}">
                     <MenuItem Header="{ext:Locale MenuBarViewWindow720}" Tag="720 1280" Click="ChangeWindowSize_Click" />
-                    <MenuItem Header="{ext:Locale MenuBarViewWindow1080}" Tag="1080 1920" Click="ChangeWindowSize_Click" />
+                    <MenuItem Header="{ext:Locale MenuBarViewWindow1080}" Tag="1080 1920"
+                              Click="ChangeWindowSize_Click" />
                 </MenuItem>
             </MenuItem>
             <MenuItem VerticalAlignment="Center" Header="{ext:Locale MenuBarHelp}">
