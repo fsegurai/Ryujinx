@@ -24,8 +24,7 @@ namespace Ryujinx.Ava.UI.Helpers
             var index = list.IndexOf(item);
             if (index != -1)
             {
-                list.RemoveAt(index);
-                list.Insert(index, item);
+                list[index] = item;
                 return true;
             }
             else

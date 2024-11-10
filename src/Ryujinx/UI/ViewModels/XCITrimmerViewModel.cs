@@ -17,8 +17,6 @@ namespace Ryujinx.Ava.UI.ViewModels
 {
     public class XCITrimmerViewModel : BaseModel
     {
-        private const long _bytesPerMB = 1024 * 1024;
-
         private enum ProcessingMode
         {
             Trimming,
@@ -45,6 +43,7 @@ namespace Ryujinx.Ava.UI.ViewModels
         private ProcessingMode _processingMode;
         private SortField _sortField = SortField.Name;
         private bool _sortAscending = true;
+        private const long _bytesPerMB = 1048576;
 
         public XCITrimmerViewModel(MainWindowViewModel mainWindowViewModel)
         {
@@ -291,15 +290,9 @@ namespace Ryujinx.Ava.UI.ViewModels
                 .ThenBy(it => it.Path);
         }
 
-        public void TrimSelected()
-        {
-            PerformOperation(ProcessingMode.Trimming);
-        }
+        public void TrimSelected() => PerformOperation(ProcessingMode.Trimming);
 
-        public void UntrimSelected()
-        {
-            PerformOperation(ProcessingMode.Untrimming);
-        }
+        public void UntrimSelected() => PerformOperation(ProcessingMode.Untrimming);
 
         public void SetProgress(int current, int maximum)
         {
@@ -332,31 +325,30 @@ namespace Ryujinx.Ava.UI.ViewModels
             bool selectionChanged = !SelectedXCIFiles.Contains(model);
             bool displayedSelectionChanged = !SelectedDisplayedXCIFiles.Contains(model);
             SelectedXCIFiles.ReplaceOrAdd(model, model);
-            if (selectionChanged)
-                SelectionChanged(displayedSelectionChanged);
+            if (selectionChanged) SelectionChanged(displayedSelectionChanged);
         }
 
         public void Deselect(XCITrimmerFileModel model)
         {
             bool displayedSelectionChanged = !SelectedDisplayedXCIFiles.Contains(model);
-            if (SelectedXCIFiles.Remove(model))
-                SelectionChanged(displayedSelectionChanged);
+            if (SelectedXCIFiles.Remove(model)) SelectionChanged(displayedSelectionChanged);
         }
 
-        public void SortAndFilter()
+        private void SortAndFilter()
         {
-            if (Processing)
-                return;
+            if (Processing) return;
 
             Sort(AllXCIFiles)
                 .AsObservableChangeSet()
                 .Filter(Filter)
                 .Bind(out var view).AsObservableList();
 
-            _displayedXCIFiles.Clear();
-            _displayedXCIFiles.AddRange(view);
-
-            DisplayedChanged();
+            if (!_displayedXCIFiles.SequenceEqual(view))
+            {
+                _displayedXCIFiles.Clear();
+                _displayedXCIFiles.AddRange(view);
+                DisplayedChanged();
+            }
         }
 
         public Optional<XCITrimmerFileModel> ProcessingApplication
@@ -365,10 +357,14 @@ namespace Ryujinx.Ava.UI.ViewModels
             set
             {
                 if (!value.HasValue && _processingApplication.HasValue)
+                {
                     value = _processingApplication.Value with { PercentageProgress = null };
+                }
 
                 if (value.HasValue)
+                {
                     _displayedXCIFiles.ReplaceWith(value.Value);
+                }
 
                 _processingApplication = value;
                 OnPropertyChanged();
@@ -401,8 +397,7 @@ namespace Ryujinx.Ava.UI.ViewModels
             {
                 if (value)
                 {
-                    if (!Processing)
-                        return;
+                    if (!Processing) return;
 
                     _cancellationTokenSource.Cancel();
                 }
@@ -458,18 +453,12 @@ namespace Ryujinx.Ava.UI.ViewModels
             }
         }
 
-        public string SortingFieldName
+        public string SortingFieldName => SortingField switch
         {
-            get
-            {
-                return SortingField switch
-                {
-                    SortField.Name => LocaleManager.Instance[LocaleKeys.XCITrimmerSortName],
-                    SortField.Saved => LocaleManager.Instance[LocaleKeys.XCITrimmerSortSaved],
-                    _ => string.Empty,
-                };
-            }
-        }
+            SortField.Name => LocaleManager.Instance[LocaleKeys.XCITrimmerSortName],
+            SortField.Saved => LocaleManager.Instance[LocaleKeys.XCITrimmerSortSaved],
+            _ => string.Empty,
+        };
 
         public bool SortingAscending
         {
@@ -481,15 +470,9 @@ namespace Ryujinx.Ava.UI.ViewModels
             }
         }
 
-        public bool IsSortedByName
-        {
-            get => _sortField == SortField.Name;
-        }
+        public bool IsSortedByName => _sortField == SortField.Name;
 
-        public bool IsSortedBySaved
-        {
-            get => _sortField == SortField.Saved;
-        }
+        public bool IsSortedBySaved => _sortField == SortField.Saved;
 
         public AvaloniaList<XCITrimmerFileModel> SelectedXCIFiles
         {
@@ -501,56 +484,20 @@ namespace Ryujinx.Ava.UI.ViewModels
             }
         }
 
-        public AvaloniaList<XCITrimmerFileModel> AllXCIFiles
-        {
-            get => _allXCIFiles;
-        }
+        public AvaloniaList<XCITrimmerFileModel> AllXCIFiles => _allXCIFiles;
 
-        public AvaloniaList<XCITrimmerFileModel> DisplayedXCIFiles
-        {
-            get => _displayedXCIFiles;
-        }
+        public AvaloniaList<XCITrimmerFileModel> DisplayedXCIFiles => _displayedXCIFiles;
 
-        public string PotentialSavings
-        {
-            get
-            {
-                return string.Format(LocaleManager.Instance[LocaleKeys.XCITrimmerSavingsMb],
-                    AllXCIFiles.Sum(xci => xci.PotentialSavingsB / _bytesPerMB));
-            }
-        }
+        public string PotentialSavings => string.Format(LocaleManager.Instance[LocaleKeys.XCITrimmerSavingsMb],
+            AllXCIFiles.Sum(xci => xci.PotentialSavingsB / _bytesPerMB));
 
-        public string ActualSavings
-        {
-            get
-            {
-                return string.Format(LocaleManager.Instance[LocaleKeys.XCITrimmerSavingsMb],
-                    AllXCIFiles.Sum(xci => xci.CurrentSavingsB / _bytesPerMB));
-            }
-        }
+        public string ActualSavings => string.Format(LocaleManager.Instance[LocaleKeys.XCITrimmerSavingsMb],
+            AllXCIFiles.Sum(xci => xci.CurrentSavingsB / _bytesPerMB));
 
-        public IEnumerable<XCITrimmerFileModel> SelectedDisplayedXCIFiles
-        {
-            get
-            {
-                return GetSelectedDisplayedXCIFiles().ToList();
-            }
-        }
+        public IEnumerable<XCITrimmerFileModel> SelectedDisplayedXCIFiles => GetSelectedDisplayedXCIFiles().ToList();
 
-        public bool CanTrim
-        {
-            get
-            {
-                return !Processing && _selectedXCIFiles.Any(xci => xci.Trimmable);
-            }
-        }
+        public bool CanTrim => !Processing && _selectedXCIFiles.Any(xci => xci.Trimmable);
 
-        public bool CanUntrim
-        {
-            get
-            {
-                return !Processing && _selectedXCIFiles.Any(xci => xci.Untrimmable);
-            }
-        }
+        public bool CanUntrim => !Processing && _selectedXCIFiles.Any(xci => xci.Untrimmable);
     }
 }
