@@ -13,8 +13,12 @@ namespace Ryujinx.UI.Common
     {
         public static Timestamps StartedAt { get; set; }
 
-        private static readonly string _description = ReleaseInformation.IsValid
-                ? $"v{ReleaseInformation.Version} {ReleaseInformation.ReleaseChannelOwner}/{ReleaseInformation.ReleaseChannelRepo}@{ReleaseInformation.BuildGitHash}"
+        private static string VersionString
+            => (ReleaseInformation.IsCanaryBuild ? "Canary " : string.Empty) + $"v{ReleaseInformation.Version}";
+
+        private static readonly string _description =
+            ReleaseInformation.IsValid
+                ? $"{VersionString} {ReleaseInformation.ReleaseChannelOwner}/{ReleaseInformation.ReleaseChannelRepo}@{ReleaseInformation.BuildGitHash}"
                 : "dev build";
 
         private const string ApplicationId = "1293250299716173864";
@@ -31,8 +35,7 @@ namespace Ryujinx.UI.Common
             {
                 Assets = new Assets
                 {
-                    LargeImageKey = "ryujinx",
-                    LargeImageText = TruncateToByteLength(_description)
+                    LargeImageKey = "ryujinx", LargeImageText = TruncateToByteLength(_description)
                 },
                 Details = "Main Menu",
                 State = "Idling",
@@ -71,7 +74,8 @@ namespace Ryujinx.UI.Common
             {
                 Assets = new Assets
                 {
-                    LargeImageKey = _discordGameAssetKeys.Contains(procRes.ProgramIdText) ? procRes.ProgramIdText : "game",
+                    LargeImageKey =
+                        _discordGameAssetKeys.Contains(procRes.ProgramIdText) ? procRes.ProgramIdText : "game",
                     LargeImageText = TruncateToByteLength($"{appMeta.Title} | {procRes.DisplayVersion}"),
                     SmallImageKey = "ryujinx",
                     SmallImageText = TruncateToByteLength(_description)
