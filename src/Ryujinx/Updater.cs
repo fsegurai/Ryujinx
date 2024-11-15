@@ -81,7 +81,7 @@ namespace Ryujinx.Ava
             }
             catch
             {
-                Logger.Error?.Print(LogClass.Application, "Failed to convert the current Ryujinx version!");
+                Logger.Error?.Print(LogClass.Application, $"Failed to convert the current {App.FullAppName} version!");
 
                 await ContentDialogHelper.CreateWarningDialog(
                     LocaleManager.Instance[LocaleKeys.DialogUpdaterConvertFailedMessage],
@@ -159,7 +159,7 @@ namespace Ryujinx.Ava
             }
             catch
             {
-                Logger.Error?.Print(LogClass.Application, "Failed to convert the received Ryujinx version from Github!");
+                Logger.Error?.Print(LogClass.Application, $"Failed to convert the received {App.FullAppName} version from GitHub!");
 
                 await ContentDialogHelper.CreateWarningDialog(
                     LocaleManager.Instance[LocaleKeys.DialogUpdaterConvertFailedGithubMessage],
