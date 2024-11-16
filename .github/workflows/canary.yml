@@ -1,8 +1,8 @@
-﻿name: Canary release job
+name: Canary release job
 
 on:
   workflow_dispatch:
-    inputs: {}
+    inputs: { }
   push:
     branches: [ "main" ]
     paths-ignore:
@@ -26,6 +26,10 @@ env:
   RYUJINX_TARGET_RELEASE_CHANNEL_REPO: "Ryujinx-Canary"
   RELEASE: 1
 
+permissions:
+  packages: write
+  contents: write
+  
 jobs:
   tag:
     name: Create tag
@@ -66,8 +70,8 @@ jobs:
     strategy:
       matrix:
         platform:
-          - { name: win-x64,     os: windows-latest, zip_os_name: win_x64     }
-          - { name: linux-x64,   os: ubuntu-latest,  zip_os_name: linux_x64   }
+          - { name: win-x64,     os: windows-latest, zip_os_name: win_x64 }
+          - { name: linux-x64,   os: ubuntu-latest,  zip_os_name: linux_x64 }
           - { name: linux-arm64, os: ubuntu-latest,  zip_os_name: linux_arm64 }
     steps:
       - uses: actions/checkout@v4
@@ -83,7 +87,7 @@ jobs:
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/global.json') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
-            
+
       - name: Overwrite csc problem matcher
         run: echo "::add-matcher::.github/csc.json"
 
