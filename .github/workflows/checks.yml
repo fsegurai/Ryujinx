@@ -2,7 +2,7 @@ name: Build PR
 
 on:
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "canary" ]
     paths:
       - '**'
       - '.github/workflows/*.yml'
