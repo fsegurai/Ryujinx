@@ -226,7 +226,7 @@ namespace Ryujinx.Ava.UI.Helpers
                 (int)Symbol.Help,
                 primaryButtonResult);
         
-        internal static async Task<UserResult> CreateConfirmationDialogExtended(
+        internal static async Task<UserResult> CreateDeniableConfirmationDialog(
             string primaryText,
             string secondaryText,
             string acceptButtonText,

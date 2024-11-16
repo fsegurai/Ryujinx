@@ -100,7 +100,7 @@ namespace Ryujinx.Ava
             // Delete backup files after updating.
             Task.Run(Updater.CleanupUpdate);
 
-            Console.Title = $"Ryujinx Console {Version}";
+            Console.Title = $"{App.FullAppName} Console {Version}";
 
             // Hook unhandled exception and process exit events.
             AppDomain.CurrentDomain.UnhandledException += (sender, e) 
@@ -224,7 +224,7 @@ namespace Ryujinx.Ava
 
         private static void PrintSystemInfo()
         {
-            Logger.Notice.Print(LogClass.Application, $"Ryujinx Version: {Version}");
+            Logger.Notice.Print(LogClass.Application, $"{App.FullAppName} Version: {Version}");
             SystemInfo.Gather().Print();
 
             var enabledLogLevels = Logger.GetEnabledLevels().ToArray();

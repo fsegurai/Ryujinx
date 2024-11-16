@@ -1,5 +1,6 @@
 using DiscordRPC;
 using Humanizer;
+using Humanizer.Localisation;
 using Ryujinx.Common;
 using Ryujinx.HLE.Loaders.Processes;
 using Ryujinx.UI.App.Common;
@@ -13,8 +14,12 @@ namespace Ryujinx.UI.Common
     {
         public static Timestamps StartedAt { get; set; }
 
-        private static readonly string _description = ReleaseInformation.IsValid
-                ? $"v{ReleaseInformation.Version} {ReleaseInformation.ReleaseChannelOwner}/{ReleaseInformation.ReleaseChannelRepo}@{ReleaseInformation.BuildGitHash}"
+        private static string VersionString
+            => (ReleaseInformation.IsCanaryBuild ? "Canary " : string.Empty) + $"v{ReleaseInformation.Version}";
+
+        private static readonly string _description =
+            ReleaseInformation.IsValid
+                ? $"{VersionString} {ReleaseInformation.ReleaseChannelOwner}/{ReleaseInformation.ReleaseChannelSourceRepo}@{ReleaseInformation.BuildGitHash}"
                 : "dev build";
 
         private const string ApplicationId = "1293250299716173864";
@@ -31,8 +36,7 @@ namespace Ryujinx.UI.Common
             {
                 Assets = new Assets
                 {
-                    LargeImageKey = "ryujinx",
-                    LargeImageText = TruncateToByteLength(_description)
+                    LargeImageKey = "ryujinx", LargeImageText = TruncateToByteLength(_description)
                 },
                 Details = "Main Menu",
                 State = "Idling",
@@ -71,14 +75,15 @@ namespace Ryujinx.UI.Common
             {
                 Assets = new Assets
                 {
-                    LargeImageKey = _discordGameAssetKeys.Contains(procRes.ProgramIdText) ? procRes.ProgramIdText : "game",
-                    LargeImageText = TruncateToByteLength($"{appMeta.Title} | {procRes.DisplayVersion}"),
+                    LargeImageKey =
+                        _discordGameAssetKeys.Contains(procRes.ProgramIdText) ? procRes.ProgramIdText : "game",
+                    LargeImageText = TruncateToByteLength($"{appMeta.Title} (v{procRes.DisplayVersion})"),
                     SmallImageKey = "ryujinx",
                     SmallImageText = TruncateToByteLength(_description)
                 },
                 Details = TruncateToByteLength($"Playing {appMeta.Title}"),
                 State = appMeta.LastPlayed.HasValue && appMeta.TimePlayed.TotalSeconds > 5
-                    ? $"Total play time: {appMeta.TimePlayed.Humanize(2, false)}"
+                    ? $"Total play time: {appMeta.TimePlayed.Humanize(2, false, maxUnit: TimeUnit.Hour)}"
                     : "Never played",
                 Timestamps = Timestamps.Now
             });
@@ -161,6 +166,7 @@ namespace Ryujinx.UI.Common
             "010036b0034e4000", // Super Mario Party
             "01006fe013472000", // Mario Party Superstars
             "0100965017338000", // Super Mario Party Jamboree
+            "01006d0017f7a000", // Mario & Luigi: Brothership
             "010067300059a000", // Mario + Rabbids: Kingdom Battle
             "0100317013770000", // Mario + Rabbids: Sparks of Hope
             "0100a3900c3e2000", // Paper Mario: The Origami King
@@ -242,7 +248,7 @@ namespace Ryujinx.UI.Common
             "0100744001588000", // Cars 3: Driven to Win
             "0100b41013c82000", // Cruis'n Blast
             "01008c8012920000", // Dying Light Platinum Edition
-            "01000a10041ea000", // The Elder Scrolls V: Skyrim
+            "010073c01af34000", // LEGO Horizon Adventures
             "0100770008dd8000", // Monster Hunter Generations Ultimate
             "0100b04011742000", // Monster Hunter Rise
             "0100853015e86000", // No Man's Sky
@@ -257,6 +263,7 @@ namespace Ryujinx.UI.Common
             "0100d7a01b7a2000", // Star Wars: Bounty Hunter
             "0100800015926000", // Suika Game
             "0100e46006708000", // Terraria
+            "01000a10041ea000", // The Elder Scrolls V: Skyrim
             "010080b00ad66000", // Undertale
         ];
     }
