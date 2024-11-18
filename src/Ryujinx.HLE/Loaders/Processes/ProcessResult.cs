@@ -12,7 +12,8 @@ namespace Ryujinx.HLE.Loaders.Processes
 {
     public class ProcessResult
     {
-        public static ProcessResult Failed => new(null, new BlitStruct<ApplicationControlProperty>(1), false, false, null, 0, 0, 0, TitleLanguage.AmericanEnglish);
+        public static ProcessResult Failed => new(null, new BlitStruct<ApplicationControlProperty>(1), false, false,
+            null, 0, 0, 0, TitleLanguage.AmericanEnglish);
 
         private readonly byte _mainThreadPriority;
         private readonly uint _mainThreadStackSize;
@@ -59,7 +60,8 @@ namespace Ryujinx.HLE.Loaders.Processes
 
                 if (string.IsNullOrWhiteSpace(Name))
                 {
-                    Name = Array.Find(ApplicationControlProperties.Title.ItemsRo.ToArray(), x => x.Name[0] != 0).NameString.ToString();
+                    Name = Array.Find(ApplicationControlProperties.Title.ItemsRo.ToArray(), x => x.Name[0] != 0)
+                        .NameString.ToString();
                 }
 
                 DisplayVersion = ApplicationControlProperties.DisplayVersionString.ToString();
@@ -76,7 +78,8 @@ namespace Ryujinx.HLE.Loaders.Processes
         {
             device.Configuration.ContentManager.LoadEntries(device);
 
-            Result result = device.System.KernelContext.Processes[ProcessId].Start(_mainThreadPriority, _mainThreadStackSize);
+            Result result = device.System.KernelContext.Processes[ProcessId]
+                .Start(_mainThreadPriority, _mainThreadStackSize);
             if (result != Result.Success)
             {
                 Logger.Error?.Print(LogClass.Loader, $"Process start returned error \"{result}\".");
@@ -85,11 +88,12 @@ namespace Ryujinx.HLE.Loaders.Processes
             }
 
             // TODO: LibHac npdm currently doesn't support version field.
-            string version = ProgramId > 0x0100000000007FFF 
-                ? DisplayVersion 
+            string version = ProgramId > 0x0100000000007FFF
+                ? DisplayVersion
                 : device.System.ContentManager.GetCurrentFirmwareVersion()?.VersionString ?? "?";
 
-            Logger.Info?.Print(LogClass.Loader, $"Application Loaded: {Name} v{version} [{ProgramIdText}] [{(Is64Bit ? "64-bit" : "32-bit")}]");
+            Logger.Info?.Print(LogClass.Loader,
+                $"Application Loaded: {Name} v{version} [{ProgramIdText}] [{(Is64Bit ? "64-bit" : "32-bit")}]");
 
             return true;
         }

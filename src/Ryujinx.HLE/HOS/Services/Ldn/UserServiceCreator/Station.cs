@@ -13,6 +13,8 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
         private readonly IUserLocalCommunicationService _parent;
 
         public bool Connected { get; private set; }
+        
+        public ProxyConfig Config => _parent.NetworkClient.Config;
 
         public Station(IUserLocalCommunicationService parent)
         {
@@ -48,9 +50,12 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
 
         public void Dispose()
         {
-            _parent.NetworkClient.DisconnectNetwork();
+            if (_parent.NetworkClient != null)
+            {
+                _parent.NetworkClient.DisconnectNetwork();
 
-            _parent.NetworkClient.NetworkChange -= NetworkChanged;
+                _parent.NetworkClient.NetworkChange -= NetworkChanged;
+            }
         }
 
         private ResultCode NetworkErrorToResult(NetworkError error)

@@ -24,6 +24,7 @@ namespace Ryujinx.UI.Common.Configuration
                 public ReactiveObject<bool> IconColumn { get; private set; }
                 public ReactiveObject<bool> AppColumn { get; private set; }
                 public ReactiveObject<bool> DevColumn { get; private set; }
+                public ReactiveObject<bool> LdnInfoColumn { get; private set; }
                 public ReactiveObject<bool> VersionColumn { get; private set; }
                 public ReactiveObject<bool> TimePlayedColumn { get; private set; }
                 public ReactiveObject<bool> LastPlayedColumn { get; private set; }
@@ -38,6 +39,7 @@ namespace Ryujinx.UI.Common.Configuration
                     AppColumn = new ReactiveObject<bool>();
                     DevColumn = new ReactiveObject<bool>();
                     VersionColumn = new ReactiveObject<bool>();
+                    LdnInfoColumn = new ReactiveObject<bool>();
                     TimePlayedColumn = new ReactiveObject<bool>();
                     LastPlayedColumn = new ReactiveObject<bool>();
                     FileExtColumn = new ReactiveObject<bool>();
@@ -571,11 +573,32 @@ namespace Ryujinx.UI.Common.Configuration
             /// </summary>
             public ReactiveObject<MultiplayerMode> Mode { get; private set; }
 
+            /// <summary>
+            /// Disable P2P
+            /// </summary>
+            public ReactiveObject<bool> DisableP2p { get; private set; }
+
+            /// <summary>
+            /// LDN PassPhrase
+            /// </summary>
+            public ReactiveObject<string> LdnPassphrase { get; private set; }
+
+            /// <summary>
+            /// LDN Server
+            /// </summary>
+            public ReactiveObject<string> LdnServer { get; private set; }
+
             public MultiplayerSection()
             {
                 LanInterfaceId = new ReactiveObject<string>();
                 Mode = new ReactiveObject<MultiplayerMode>();
                 Mode.LogChangesToValue(nameof(MultiplayerMode));
+                DisableP2p = new ReactiveObject<bool>();
+                DisableP2p.LogChangesToValue(nameof(DisableP2p));
+                LdnPassphrase = new ReactiveObject<string>();
+                LdnPassphrase.LogChangesToValue(nameof(LdnPassphrase));
+                LdnServer = new ReactiveObject<string>();
+                LdnServer.LogChangesToValue(nameof(LdnServer));
             }
         }
 

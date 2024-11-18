@@ -9,6 +9,8 @@ using Ryujinx.HLE.HOS.Ipc;
 using Ryujinx.HLE.HOS.Kernel.Threading;
 using Ryujinx.HLE.HOS.Services.Ldn.Types;
 using Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator.LdnMitm;
+using Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator.LdnRyu;
+using Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator.Types;
 using Ryujinx.Horizon.Common;
 using Ryujinx.Memory;
 using System;
@@ -21,6 +23,9 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
 {
     class IUserLocalCommunicationService : IpcService, IDisposable
     {
+        private static string DefaultLanPlayHost = "ryuldn.vudjun.com";
+        private static short LanPlayPort = 30456;
+
         public INetworkClient NetworkClient { get; private set; }
 
         private const int NifmRequestID = 90;
@@ -58,7 +63,8 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
         private bool CheckLocalCommunicationIdPermission(ServiceCtx context, ulong localCommunicationIdChecked)
         {
             // TODO: Call nn::arp::GetApplicationControlProperty here when implemented.
-            ApplicationControlProperty controlProperty = context.Device.Processes.ActiveApplication.ApplicationControlProperties;
+            ApplicationControlProperty controlProperty =
+                context.Device.Processes.ActiveApplication.ApplicationControlProperties;
 
             foreach (var localCommunicationId in controlProperty.LocalCommunicationId.ItemsRo)
             {
@@ -175,19 +181,38 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
 
             if (_state == NetworkState.AccessPointCreated || _state == NetworkState.StationConnected)
             {
-                (_, UnicastIPAddressInformation unicastAddress) = NetworkHelpers.GetLocalInterface(context.Device.Configuration.MultiplayerLanInterfaceId);
-
-                if (unicastAddress == null)
+                ProxyConfig config = _state switch
                 {
-                    context.ResponseData.Write(NetworkHelpers.ConvertIpv4Address(DefaultIPAddress));
-                    context.ResponseData.Write(NetworkHelpers.ConvertIpv4Address(DefaultSubnetMask));
+                    NetworkState.AccessPointCreated => _accessPoint.Config,
+                    NetworkState.StationConnected => _station.Config,
+
+                    _ => default
+                };
+
+                if (config.ProxyIp == 0)
+                {
+                    (_, UnicastIPAddressInformation unicastAddress) =
+                        NetworkHelpers.GetLocalInterface(context.Device.Configuration.MultiplayerLanInterfaceId);
+
+                    if (unicastAddress == null)
+                    {
+                        context.ResponseData.Write(NetworkHelpers.ConvertIpv4Address(DefaultIPAddress));
+                        context.ResponseData.Write(NetworkHelpers.ConvertIpv4Address(DefaultSubnetMask));
+                    }
+                    else
+                    {
+                        Logger.Info?.Print(LogClass.ServiceLdn, $"Console's LDN IP is \"{unicastAddress.Address}\".");
+
+                        context.ResponseData.Write(NetworkHelpers.ConvertIpv4Address(unicastAddress.Address));
+                        context.ResponseData.Write(NetworkHelpers.ConvertIpv4Address(unicastAddress.IPv4Mask));
+                    }
                 }
                 else
                 {
-                    Logger.Info?.Print(LogClass.ServiceLdn, $"Console's LDN IP is \"{unicastAddress.Address}\".");
+                    Logger.Info?.Print(LogClass.ServiceLdn, $"LDN obtained proxy IP.");
 
-                    context.ResponseData.Write(NetworkHelpers.ConvertIpv4Address(unicastAddress.Address));
-                    context.ResponseData.Write(NetworkHelpers.ConvertIpv4Address(unicastAddress.IPv4Mask));
+                    context.ResponseData.Write(config.ProxyIp);
+                    context.ResponseData.Write(config.ProxySubnetMask);
                 }
             }
             else
@@ -236,8 +261,7 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
 
             SecurityParameter securityParameter = new()
             {
-                Data = new Array16<byte>(),
-                SessionId = networkInfo.NetworkId.SessionId,
+                Data = new Array16<byte>(), SessionId = networkInfo.NetworkId.SessionId,
             };
 
             context.ResponseData.WriteStruct(securityParameter);
@@ -278,7 +302,9 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
         // AttachStateChangeEvent() -> handle<copy>
         public ResultCode AttachStateChangeEvent(ServiceCtx context)
         {
-            if (_stateChangeEventHandle == 0 && context.Process.HandleTable.GenerateHandle(_stateChangeEvent.ReadableEvent, out _stateChangeEventHandle) != Result.Success)
+            if (_stateChangeEventHandle == 0 &&
+                context.Process.HandleTable.GenerateHandle(_stateChangeEvent.ReadableEvent,
+                    out _stateChangeEventHandle) != Result.Success)
             {
                 throw new InvalidOperationException("Out of handles!");
             }
@@ -372,7 +398,8 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
                 {
                     ScanFilterFlag scanFilterFlag = scanFilter.Flag;
 
-                    if (!scanFilterFlag.HasFlag(ScanFilterFlag.NetworkType) || scanFilter.NetworkType <= NetworkType.All)
+                    if (!scanFilterFlag.HasFlag(ScanFilterFlag.NetworkType) ||
+                        scanFilter.NetworkType <= NetworkType.All)
                     {
                         if (scanFilterFlag.HasFlag(ScanFilterFlag.Ssid))
                         {
@@ -395,15 +422,19 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
                             }
                             else
                             {
-                                if (scanFilter.NetworkId.IntentId.LocalCommunicationId == -1 && NetworkClient.NeedsRealId)
+                                if (scanFilter.NetworkId.IntentId.LocalCommunicationId == -1 &&
+                                    NetworkClient.NeedsRealId)
                                 {
                                     // TODO: Call nn::arp::GetApplicationControlProperty here when implemented.
-                                    ApplicationControlProperty controlProperty = context.Device.Processes.ActiveApplication.ApplicationControlProperties;
+                                    ApplicationControlProperty controlProperty = context.Device.Processes
+                                        .ActiveApplication.ApplicationControlProperties;
 
-                                    scanFilter.NetworkId.IntentId.LocalCommunicationId = (long)controlProperty.LocalCommunicationId[0];
+                                    scanFilter.NetworkId.IntentId.LocalCommunicationId =
+                                        (long)controlProperty.LocalCommunicationId[0];
                                 }
 
-                                resultCode = ScanInternal(context.Memory, channel, scanFilter, bufferPosition, bufferSize, out ulong counter);
+                                resultCode = ScanInternal(context.Memory, channel, scanFilter, bufferPosition,
+                                    bufferSize, out ulong counter);
 
                                 context.ResponseData.Write(counter);
                             }
@@ -419,7 +450,8 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
             return resultCode;
         }
 
-        private ResultCode ScanInternal(IVirtualMemoryManager memory, ushort channel, ScanFilter scanFilter, ulong bufferPosition, ulong bufferSize, out ulong counter)
+        private ResultCode ScanInternal(IVirtualMemoryManager memory, ushort channel, ScanFilter scanFilter,
+            ulong bufferPosition, ulong bufferSize, out ulong counter)
         {
             ulong networkInfoSize = (ulong)Marshal.SizeOf(typeof(NetworkInfo));
             ulong maxGames = bufferSize / networkInfoSize;
@@ -539,7 +571,8 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
         public ResultCode CreateNetworkImpl(ServiceCtx context, bool isPrivate = false)
         {
             SecurityConfig securityConfig = context.RequestData.ReadStruct<SecurityConfig>();
-            SecurityParameter securityParameter = isPrivate ? context.RequestData.ReadStruct<SecurityParameter>() : new SecurityParameter();
+            SecurityParameter securityParameter =
+                isPrivate ? context.RequestData.ReadStruct<SecurityParameter>() : new SecurityParameter();
 
             UserConfig userConfig = context.RequestData.ReadStruct<UserConfig>();
 
@@ -549,12 +582,14 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
             if (networkConfig.IntentId.LocalCommunicationId == -1 && NetworkClient.NeedsRealId)
             {
                 // TODO: Call nn::arp::GetApplicationControlProperty here when implemented.
-                ApplicationControlProperty controlProperty = context.Device.Processes.ActiveApplication.ApplicationControlProperties;
+                ApplicationControlProperty controlProperty =
+                    context.Device.Processes.ActiveApplication.ApplicationControlProperties;
 
                 networkConfig.IntentId.LocalCommunicationId = (long)controlProperty.LocalCommunicationId[0];
             }
 
-            bool isLocalCommunicationIdValid = CheckLocalCommunicationIdPermission(context, (ulong)networkConfig.IntentId.LocalCommunicationId);
+            bool isLocalCommunicationIdValid =
+                CheckLocalCommunicationIdPermission(context, (ulong)networkConfig.IntentId.LocalCommunicationId);
             if (!isLocalCommunicationIdValid && NetworkClient.NeedsRealId)
             {
                 return ResultCode.InvalidObject;
@@ -587,9 +622,11 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
 
                                     context.Memory.Read(bufferPosition, addressListBytes);
 
-                                    AddressList addressList = MemoryMarshal.Cast<byte, AddressList>(addressListBytes)[0];
+                                    AddressList addressList =
+                                        MemoryMarshal.Cast<byte, AddressList>(addressListBytes)[0];
 
-                                    _accessPoint.CreateNetworkPrivate(securityConfig, securityParameter, userConfig, networkConfig, addressList);
+                                    _accessPoint.CreateNetworkPrivate(securityConfig, securityParameter, userConfig,
+                                        networkConfig, addressList);
                                 }
                                 else
                                 {
@@ -824,7 +861,8 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
         private ResultCode ConnectImpl(ServiceCtx context, bool isPrivate = false)
         {
             SecurityConfig securityConfig = context.RequestData.ReadStruct<SecurityConfig>();
-            SecurityParameter securityParameter = isPrivate ? context.RequestData.ReadStruct<SecurityParameter>() : new SecurityParameter();
+            SecurityParameter securityParameter =
+                isPrivate ? context.RequestData.ReadStruct<SecurityParameter>() : new SecurityParameter();
 
             UserConfig userConfig = context.RequestData.ReadStruct<UserConfig>();
             uint localCommunicationVersion = context.RequestData.ReadUInt32();
@@ -854,12 +892,14 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
             if (networkInfo.NetworkId.IntentId.LocalCommunicationId == -1 && NetworkClient.NeedsRealId)
             {
                 // TODO: Call nn::arp::GetApplicationControlProperty here when implemented.
-                ApplicationControlProperty controlProperty = context.Device.Processes.ActiveApplication.ApplicationControlProperties;
+                ApplicationControlProperty controlProperty =
+                    context.Device.Processes.ActiveApplication.ApplicationControlProperties;
 
                 networkInfo.NetworkId.IntentId.LocalCommunicationId = (long)controlProperty.LocalCommunicationId[0];
             }
 
-            bool isLocalCommunicationIdValid = CheckLocalCommunicationIdPermission(context, (ulong)networkInfo.NetworkId.IntentId.LocalCommunicationId);
+            bool isLocalCommunicationIdValid = CheckLocalCommunicationIdPermission(context,
+                (ulong)networkInfo.NetworkId.IntentId.LocalCommunicationId);
             if (!isLocalCommunicationIdValid && NetworkClient.NeedsRealId)
             {
                 return ResultCode.InvalidObject;
@@ -892,11 +932,13 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
                             {
                                 if (isPrivate)
                                 {
-                                    resultCode = _station.ConnectPrivate(securityConfig, securityParameter, userConfig, localCommunicationVersion, optionUnknown, networkConfig);
+                                    resultCode = _station.ConnectPrivate(securityConfig, securityParameter, userConfig,
+                                        localCommunicationVersion, optionUnknown, networkConfig);
                                 }
                                 else
                                 {
-                                    resultCode = _station.Connect(securityConfig, userConfig, localCommunicationVersion, optionUnknown, networkInfo);
+                                    resultCode = _station.Connect(securityConfig, userConfig, localCommunicationVersion,
+                                        optionUnknown, networkInfo);
                                 }
                             }
                         }
@@ -1066,6 +1108,32 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
 
                         switch (mode)
                         {
+                            case MultiplayerMode.LdnRyu:
+                                try
+                                {
+                                    string ldnServer = context.Device.Configuration.MultiplayerLdnServer;
+                                    if (string.IsNullOrEmpty(ldnServer))
+                                    {
+                                        ldnServer = DefaultLanPlayHost;
+                                    }
+
+                                    if (!IPAddress.TryParse(ldnServer, out IPAddress ipAddress))
+                                    {
+                                        ipAddress = Dns.GetHostEntry(ldnServer).AddressList[0];
+                                    }
+
+                                    NetworkClient = new LdnMasterProxyClient(ipAddress.ToString(), LanPlayPort,
+                                        context.Device.Configuration);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Logger.Error?.Print(LogClass.ServiceLdn,
+                                        "Could not locate LdnRyu server. Defaulting to stubbed wireless.");
+                                    Logger.Error?.Print(LogClass.ServiceLdn, ex.Message);
+                                    NetworkClient = new LdnDisabledClient();
+                                }
+
+                                break;
                             case MultiplayerMode.LdnMitm:
                                 NetworkClient = new LdnMitmClient(context.Device.Configuration);
                                 break;
@@ -1075,7 +1143,8 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
                         }
 
                         // TODO: Call nn::arp::GetApplicationLaunchProperty here when implemented.
-                        NetworkClient.SetGameVersion(context.Device.Processes.ActiveApplication.ApplicationControlProperties.DisplayVersion.Items.ToArray());
+                        NetworkClient.SetGameVersion(context.Device.Processes.ActiveApplication
+                            .ApplicationControlProperties.DisplayVersion.Items.ToArray());
 
                         resultCode = ResultCode.Success;
 
@@ -1103,7 +1172,7 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
             _accessPoint?.Dispose();
             _accessPoint = null;
 
-            NetworkClient?.Dispose();
+            NetworkClient?.DisconnectAndStop();
             NetworkClient = null;
         }
     }

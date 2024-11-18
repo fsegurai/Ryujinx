@@ -393,6 +393,21 @@ namespace Ryujinx.UI.Common.Configuration
         public string MultiplayerLanInterfaceId { get; set; }
 
         /// <summary>
+        /// Disable P2p Toggle
+        /// </summary>
+        public bool MultiplayerDisableP2p { get; set; }
+
+        /// <summary>
+        /// Local network passphrase, for private networks.
+        /// </summary>
+        public string MultiplayerLdnPassphrase { get; set; }
+
+        /// <summary>
+        /// Custom LDN Server
+        /// </summary>
+        public string LdnServer { get; set; }
+
+        /// <summary>
         /// Uses Hypervisor over JIT if available
         /// </summary>
         public bool UseHypervisor { get; set; }
@@ -406,7 +421,8 @@ namespace Ryujinx.UI.Common.Configuration
         {
             try
             {
-                configurationFileFormat = JsonHelper.DeserializeFromFile(path, ConfigurationFileFormatSettings.SerializerContext.ConfigurationFileFormat);
+                configurationFileFormat = JsonHelper.DeserializeFromFile(path,
+                    ConfigurationFileFormatSettings.SerializerContext.ConfigurationFileFormat);
 
                 return configurationFileFormat.Version != 0;
             }
@@ -424,7 +440,8 @@ namespace Ryujinx.UI.Common.Configuration
         /// <param name="path">The path to the JSON configuration file</param>
         public void SaveConfig(string path)
         {
-            JsonHelper.SerializeToFile(path, this, ConfigurationFileFormatSettings.SerializerContext.ConfigurationFileFormat);
+            JsonHelper.SerializeToFile(path, this,
+                ConfigurationFileFormatSettings.SerializerContext.ConfigurationFileFormat);
         }
     }
 }

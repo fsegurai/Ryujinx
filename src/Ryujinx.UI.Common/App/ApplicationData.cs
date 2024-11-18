@@ -27,6 +27,8 @@ namespace Ryujinx.UI.App.Common
         public ulong Id { get; set; }
         public string Developer { get; set; } = "Unknown";
         public string Version { get; set; } = "0";
+        public int PlayerCount { get; set; }
+        public int GameCount { get; set; }
         public TimeSpan TimePlayed { get; set; }
         public DateTime? LastPlayed { get; set; }
         public string FileExtension { get; set; }
@@ -46,7 +48,8 @@ namespace Ryujinx.UI.App.Common
 
         [JsonIgnore] public string IdBaseString => IdBase.ToString("x16");
 
-        public static string GetBuildId(VirtualFileSystem virtualFileSystem, IntegrityCheckLevel checkLevel, string titleFilePath)
+        public static string GetBuildId(VirtualFileSystem virtualFileSystem, IntegrityCheckLevel checkLevel,
+            string titleFilePath)
         {
             using FileStream file = new(titleFilePath, FileMode.Open, FileAccess.Read);
 
@@ -110,7 +113,8 @@ namespace Ryujinx.UI.App.Common
 
             if (mainNca == null)
             {
-                Logger.Error?.Print(LogClass.Application, "Extraction failure. The main NCA was not present in the selected file");
+                Logger.Error?.Print(LogClass.Application,
+                    "Extraction failure. The main NCA was not present in the selected file");
 
                 return string.Empty;
             }
@@ -135,7 +139,8 @@ namespace Ryujinx.UI.App.Common
             {
                 if (patchNca.CanOpenSection(NcaSectionType.Code))
                 {
-                    codeFs = mainNca.OpenFileSystemWithPatch(patchNca, NcaSectionType.Code, IntegrityCheckLevel.ErrorOnInvalid);
+                    codeFs = mainNca.OpenFileSystemWithPatch(patchNca, NcaSectionType.Code,
+                        IntegrityCheckLevel.ErrorOnInvalid);
                 }
             }
 
@@ -162,7 +167,8 @@ namespace Ryujinx.UI.App.Common
             NsoReader reader = new();
             reader.Initialize(nsoFile.Release().AsStorage().AsFile(OpenMode.Read)).ThrowIfFailure();
 
-            return BitConverter.ToString(reader.Header.ModuleId.ItemsRo.ToArray()).Replace("-", string.Empty).ToUpper()[..16];
+            return BitConverter.ToString(reader.Header.ModuleId.ItemsRo.ToArray()).Replace("-", string.Empty)
+                .ToUpper()[..16];
         }
     }
 }

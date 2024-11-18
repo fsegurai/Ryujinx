@@ -28,6 +28,7 @@ using Ryujinx.UI.Common.Configuration;
 using Ryujinx.UI.Common.Helper;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reactive.Linq;
 using System.Runtime.Versioning;
 using System.Threading;
@@ -151,6 +152,34 @@ namespace Ryujinx.Ava.UI.Windows
                     StatusBarView.LoadProgressBar.IsVisible = false;
                 }
             });
+        }
+        
+        private void ApplicationLibrary_LdnGameDataReceived(object sender, LdnGameDataReceivedEventArgs e)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                var ldnGameDataArray = e.LdnData;
+                ViewModel.LastLdnGameData = ldnGameDataArray;
+                foreach (var application in ViewModel.Applications)
+                {
+                    UpdateApplicationWithLdnData(application);
+                }
+                ViewModel.RefreshView();
+            });
+        }
+        private void UpdateApplicationWithLdnData(ApplicationData application)
+        {
+            if (application.ControlHolder.ByteSpan.Length > 0 && ViewModel.LastLdnGameData != null)
+            {
+                IEnumerable<LdnGameData> ldnGameData = ViewModel.LastLdnGameData.Where(game => application.ControlHolder.Value.LocalCommunicationId.Items.Contains(Convert.ToUInt64(game.TitleId, 16)));
+                application.PlayerCount = ldnGameData.Sum(game => game.PlayerCount);
+                application.GameCount = ldnGameData.Count();
+            }
+            else
+            {
+                application.PlayerCount = 0;
+                application.GameCount = 0;
+            }
         }
 
         public void Application_Opened(object sender, ApplicationOpenedEventArgs args)
@@ -468,7 +497,18 @@ namespace Ryujinx.Ava.UI.Windows
                     .Connect()
                     .ObserveOn(SynchronizationContext.Current!)
                     .Bind(ViewModel.Applications)
+                    .OnItemAdded(UpdateApplicationWithLdnData)
                     .Subscribe();
+            ApplicationLibrary.LdnGameDataReceived += ApplicationLibrary_LdnGameDataReceived;
+            ConfigurationState.Instance.Multiplayer.Mode.Event += (sender, evt) =>
+            {
+                _ = Task.Run(ViewModel.ApplicationLibrary.RefreshLdn);
+            };
+            ConfigurationState.Instance.Multiplayer.LdnServer.Event += (sender, evt) =>
+            {
+                _ = Task.Run(ViewModel.ApplicationLibrary.RefreshLdn);
+            };
+            _ = Task.Run(ViewModel.ApplicationLibrary.RefreshLdn);
 
             ViewModel.RefreshFirmwareStatus();
 
@@ -477,7 +517,6 @@ namespace Ryujinx.Ava.UI.Windows
             {
                 LoadApplications();
             }
-            
             _ = CheckLaunchState();
         }
 
@@ -607,13 +646,26 @@ namespace Ryujinx.Ava.UI.Windows
         {
             switch (fileType)
             {
-                case "NSP": ConfigurationState.Instance.UI.ShownFileTypes.NSP.Toggle(); break;
-                case "PFS0": ConfigurationState.Instance.UI.ShownFileTypes.PFS0.Toggle(); break;
-                case "XCI": ConfigurationState.Instance.UI.ShownFileTypes.XCI.Toggle(); break;
-                case "NCA": ConfigurationState.Instance.UI.ShownFileTypes.NCA.Toggle(); break;
-                case "NRO": ConfigurationState.Instance.UI.ShownFileTypes.NRO.Toggle(); break;
-                case "NSO": ConfigurationState.Instance.UI.ShownFileTypes.NSO.Toggle(); break;
-                default: throw new ArgumentOutOfRangeException(fileType);
+                case "NSP":
+                    ConfigurationState.Instance.UI.ShownFileTypes.NSP.Toggle();
+                    break;
+                case "PFS0":
+                    ConfigurationState.Instance.UI.ShownFileTypes.PFS0.Toggle();
+                    break;
+                case "XCI":
+                    ConfigurationState.Instance.UI.ShownFileTypes.XCI.Toggle();
+                    break;
+                case "NCA":
+                    ConfigurationState.Instance.UI.ShownFileTypes.NCA.Toggle();
+                    break;
+                case "NRO":
+                    ConfigurationState.Instance.UI.ShownFileTypes.NRO.Toggle();
+                    break;
+                case "NSO":
+                    ConfigurationState.Instance.UI.ShownFileTypes.NSO.Toggle();
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(fileType);
             }
 
             ConfigurationState.Instance.ToFileFormat().SaveConfig(Program.ConfigurationPath);
