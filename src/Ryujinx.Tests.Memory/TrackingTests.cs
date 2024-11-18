@@ -397,7 +397,7 @@ namespace Ryujinx.Tests.Memory
 
             _memoryManager.OnProtect += (va, size, newProtection) =>
             {
-                Assert.That((0, Is.EqualTo(PageSize)), Is.EqualTo((va, size))); // Should protect the exact region all the operations use.
+                Assert.That((va, size), Is.EqualTo((0UL, (ulong)PageSize))); // Corrected assertion// Should protect the exact region all the operations use.
                 protection = newProtection;
             };
 

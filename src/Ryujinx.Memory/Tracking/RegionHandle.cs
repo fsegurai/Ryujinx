@@ -389,9 +389,9 @@ namespace Ryujinx.Memory.Tracking
         }
 
         /// <summary>
-        /// Consume the dirty flag for this handle, and reprotect so it can be set on the next write.
+        /// Consume the dirty flag for this handle, and protect so it can be set on the next write.
         /// </summary>
-        /// <param name="asDirty">True if the handle should be reprotected as dirty, rather than have it cleared</param>
+        /// <param name="asDirty">True if the handle should be protected as dirty, rather than have it cleared</param>
         public void Reprotect(bool asDirty = false)
         {
             Reprotect(asDirty, false);

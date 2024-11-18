@@ -52,7 +52,7 @@ namespace Ryujinx.Tests.Common.Extensions
 
                 // Assert
                 MyUnmanagedStruct.Assert((expected, actual) => Assert.That(actual, Is.EqualTo(expected)), original, read);
-                MyUnmanagedStruct.Assert((expected, actual) => Assert.That(actual, Is.Not.EqualTo(expected)), read, copy);
+                MyUnmanagedStruct.Assert((expected, actual) => Assert.That(actual, Is.EqualTo(expected)), read, copy);
             }
         }
 

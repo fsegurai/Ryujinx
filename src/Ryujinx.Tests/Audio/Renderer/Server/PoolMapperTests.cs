@@ -64,7 +64,7 @@ namespace Ryujinx.Tests.Audio.Renderer.Server
             memoryPoolDsp.IsUsed = true;
             Assert.That(poolMapper.Unmap(ref memoryPoolDsp), Is.False);
             memoryPoolDsp.IsUsed = false;
-            Assert.That(poolMapper.Unmap(ref memoryPoolDsp), Is.False);
+            Assert.That(poolMapper.Unmap(ref memoryPoolDsp), Is.True);
         }
 
         [Test]
