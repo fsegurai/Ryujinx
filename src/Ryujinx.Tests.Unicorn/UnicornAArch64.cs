@@ -101,9 +101,6 @@ namespace Ryujinx.Tests.Unicorn
 
         public void RunForCount(ulong count)
         {
-            // FIXME: untilAddr should be 0xFFFFFFFFFFFFFFFFul
-            Uc.EmuStart((long)this.PC, -1, 0, (long)count);
-            
             // ulong.MaxValue instead of -1 to avoid NullReferenceException
             Uc.EmuStart((long)this.PC, unchecked((long)ulong.MaxValue), 0, (long)count);
         }
