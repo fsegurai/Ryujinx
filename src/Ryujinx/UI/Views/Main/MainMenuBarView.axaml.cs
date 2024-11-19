@@ -40,8 +40,8 @@ namespace Ryujinx.Ava.UI.Views.Main
         private CheckBox[] GenerateToggleFileTypeItems() =>
             Enum.GetValues<FileTypes>()
                 .Select(it => (FileName: Enum.GetName(it)!, FileType: it))
-                .Select(it => 
-                    new CheckBox 
+                .Select(it =>
+                    new CheckBox
                     {
                         Content = $".{it.FileName}",
                         IsChecked = it.FileType.GetConfigValue(ConfigurationState.Instance.UI.ShownFileTypes),
@@ -123,18 +123,18 @@ namespace Ryujinx.Ava.UI.Views.Main
 
         public async void OpenMiiApplet(object sender, RoutedEventArgs e)
         {
-            string contentPath = ViewModel.ContentManager.GetInstalledContentPath(0x0100000000001009, StorageId.BuiltInSystem, NcaContentType.Program);
+            string contentPath = ViewModel.ContentManager.GetInstalledContentPath(0x0100000000001009,
+                StorageId.BuiltInSystem, NcaContentType.Program);
 
             if (!string.IsNullOrEmpty(contentPath))
             {
                 ApplicationData applicationData = new()
                 {
-                    Name = "miiEdit",
-                    Id = 0x0100000000001009,
-                    Path = contentPath,
+                    Name = "miiEdit", Id = 0x0100000000001009, Path = contentPath,
                 };
 
-                await ViewModel.LoadApplication(applicationData, ViewModel.IsFullScreen || ViewModel.StartGamesInFullscreen);
+                await ViewModel.LoadApplication(applicationData,
+                    ViewModel.IsFullScreen || ViewModel.StartGamesInFullscreen);
             }
         }
 
@@ -146,7 +146,8 @@ namespace Ryujinx.Ava.UI.Views.Main
             if (!ViewModel.IsGameRunning)
                 return;
 
-            string name = ViewModel.AppHost.Device.Processes.ActiveApplication.ApplicationControlProperties.Title[(int)ViewModel.AppHost.Device.System.State.DesiredTitleLanguage].NameString.ToString();
+            string name = ViewModel.AppHost.Device.Processes.ActiveApplication.ApplicationControlProperties
+                .Title[(int)ViewModel.AppHost.Device.System.State.DesiredTitleLanguage].NameString.ToString();
 
             await new CheatWindow(
                 Window.VirtualFileSystem,
@@ -165,18 +166,26 @@ namespace Ryujinx.Ava.UI.Views.Main
 
         private async void InstallFileTypes_Click(object sender, RoutedEventArgs e)
         {
-            if (FileAssociationHelper.Install())
-                await ContentDialogHelper.CreateInfoDialog(LocaleManager.Instance[LocaleKeys.DialogInstallFileTypesSuccessMessage], string.Empty, LocaleManager.Instance[LocaleKeys.InputDialogOk], string.Empty, string.Empty);
+            ViewModel.AreMimeTypesRegistered = FileAssociationHelper.Install();
+            if (ViewModel.AreMimeTypesRegistered)
+                await ContentDialogHelper.CreateInfoDialog(
+                    LocaleManager.Instance[LocaleKeys.DialogInstallFileTypesSuccessMessage], string.Empty,
+                    LocaleManager.Instance[LocaleKeys.InputDialogOk], string.Empty, string.Empty);
             else
-                await ContentDialogHelper.CreateErrorDialog(LocaleManager.Instance[LocaleKeys.DialogInstallFileTypesErrorMessage]);
+                await ContentDialogHelper.CreateErrorDialog(
+                    LocaleManager.Instance[LocaleKeys.DialogInstallFileTypesErrorMessage]);
         }
 
         private async void UninstallFileTypes_Click(object sender, RoutedEventArgs e)
         {
-            if (FileAssociationHelper.Uninstall())
-                await ContentDialogHelper.CreateInfoDialog(LocaleManager.Instance[LocaleKeys.DialogUninstallFileTypesSuccessMessage], string.Empty, LocaleManager.Instance[LocaleKeys.InputDialogOk], string.Empty, string.Empty);
+            ViewModel.AreMimeTypesRegistered = !FileAssociationHelper.Uninstall();
+            if (!ViewModel.AreMimeTypesRegistered)
+                await ContentDialogHelper.CreateInfoDialog(
+                    LocaleManager.Instance[LocaleKeys.DialogUninstallFileTypesSuccessMessage], string.Empty,
+                    LocaleManager.Instance[LocaleKeys.InputDialogOk], string.Empty, string.Empty);
             else
-                await ContentDialogHelper.CreateErrorDialog(LocaleManager.Instance[LocaleKeys.DialogUninstallFileTypesErrorMessage]);
+                await ContentDialogHelper.CreateErrorDialog(
+                    LocaleManager.Instance[LocaleKeys.DialogUninstallFileTypesErrorMessage]);
         }
 
         private async void ChangeWindowSize_Click(object sender, RoutedEventArgs e)
@@ -186,7 +195,7 @@ namespace Ryujinx.Ava.UI.Views.Main
 
             (int resolutionWidth, int resolutionHeight) = resolution.Split(' ', 2)
                 .Into(parts => (int.Parse(parts[0]), int.Parse(parts[1])));
-            
+
             // Correctly size window when 'TitleBar' is enabled (Nov. 14, 2024)
             double barsHeight = ((Window.StatusBarHeight + Window.MenuBarHeight) +
                                  (ConfigurationState.Instance.ShowTitleBar ? (int)Window.TitleBar.Height : 0));
@@ -206,8 +215,9 @@ namespace Ryujinx.Ava.UI.Views.Main
             if (Updater.CanUpdate(true))
                 await Updater.BeginParse(Window, true);
         }
-        
-        public async void OpenXCITrimmerWindow(object sender, RoutedEventArgs e) => await XCITrimmerWindow.Show(ViewModel);
+
+        public async void OpenXCITrimmerWindow(object sender, RoutedEventArgs e) =>
+            await XCITrimmerWindow.Show(ViewModel);
 
         public async void OpenAboutWindow(object sender, RoutedEventArgs e) => await AboutWindow.Show();
 
