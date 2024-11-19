@@ -132,22 +132,6 @@ jobs:
           popd
         shell: bash
 
-      - name: Packing Linux builds
-        if: matrix.platform.os == 'ubuntu-latest'
-        run: |
-          pushd publish_ava
-          rm publish/libarmeilleure-jitsupport.dylib
-          chmod +x publish/Ryujinx.sh publish/Ryujinx
-          tar -czvf ../release_output/ryujinx-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.tar.gz publish
-          popd
-
-          pushd publish_sdl2_headless
-          rm publish/libarmeilleure-jitsupport.dylib
-          chmod +x publish/Ryujinx.sh publish/Ryujinx.Headless.SDL2
-          tar -czvf ../release_output/sdl2-ryujinx-headless-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.tar.gz publish
-          popd
-        shell: bash
-
       - name: Build AppImage (Linux)
         if: matrix.platform.os == 'ubuntu-latest'
         run: |
@@ -186,11 +170,27 @@ jobs:
           popd
         shell: bash
 
+      - name: Packing Linux builds
+        if: matrix.platform.os == 'ubuntu-latest'
+        run: |
+          pushd publish_ava
+          rm publish/libarmeilleure-jitsupport.dylib
+          chmod +x publish/Ryujinx.sh publish/Ryujinx
+          tar -czvf ../release_output/ryujinx-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.tar.gz publish
+          popd
+
+          pushd publish_sdl2_headless
+          rm publish/libarmeilleure-jitsupport.dylib
+          chmod +x publish/Ryujinx.sh publish/Ryujinx.Headless.SDL2
+          tar -czvf ../release_output/sdl2-ryujinx-headless-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.tar.gz publish
+          popd
+        shell: bash
+
       - name: Pushing new release
         uses: ncipollo/release-action@v1
         with:
           name: ${{ steps.version_info.outputs.build_version }}
-          artifacts: "release_output/*.tar.gz,release_output/*.zip"
+          artifacts: "release_output/*.tar.gz,release_output/*.zip,release_output/*AppImage*"
           tag: ${{ steps.version_info.outputs.build_version }}
           body: "**Full Changelog**: https://github.com/${{ github.repository }}/compare/Canary-${{ steps.version_info.outputs.prev_build_version }}...Canary-${{ steps.version_info.outputs.build_version }}"
           omitBodyDuringUpdate: true
