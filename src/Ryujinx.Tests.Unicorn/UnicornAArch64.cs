@@ -97,10 +97,7 @@ namespace Ryujinx.Tests.Unicorn
                 return;
             }
 
-            if (Uc != null)
-            {
-                Uc.Close();
-            }
+            Uc?.Close();
 
             _isDisposed = true;
         }
