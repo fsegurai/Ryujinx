@@ -37,8 +37,8 @@ namespace Ryujinx.Ava.UI.Applet
 
         public ControllerAppletDialog(MainWindow mainWindow, ControllerAppletUIArgs args)
         {
-            PlayerCount = args.PlayerCountMin == args.PlayerCountMax 
-                ? args.PlayerCountMin.ToString() 
+            PlayerCount = args.PlayerCountMin == args.PlayerCountMax
+                ? args.PlayerCountMin.ToString()
                 : $"{args.PlayerCountMin} - {args.PlayerCountMax}";
 
             SupportsProController = (args.SupportedStyles & ControllerType.ProController) != 0;
@@ -112,9 +112,11 @@ namespace Ryujinx.Ava.UI.Applet
             {
                 Dispatcher.UIThread.InvokeAsync(async () =>
                 {
-                    _mainWindow.SettingsWindow = new SettingsWindow(_mainWindow.VirtualFileSystem, _mainWindow.ContentManager);
+                    _mainWindow.SettingsWindow =
+                        new SettingsWindow(_mainWindow.VirtualFileSystem, _mainWindow.ContentManager);
                     _mainWindow.SettingsWindow.NavPanel.Content = _mainWindow.SettingsWindow.InputPage;
-                    _mainWindow.SettingsWindow.NavPanel.SelectedItem = _mainWindow.SettingsWindow.NavPanel.MenuItems.ElementAt(1);
+                    _mainWindow.SettingsWindow.NavPanel.SelectedItem =
+                        _mainWindow.SettingsWindow.NavPanel.MenuItems.ElementAt(1);
 
                     await ContentDialogHelper.ShowWindowAsync(_mainWindow.SettingsWindow, _mainWindow);
                     _mainWindow.SettingsWindow = null;
@@ -129,4 +131,3 @@ namespace Ryujinx.Ava.UI.Applet
         }
     }
 }
-

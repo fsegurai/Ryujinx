@@ -32,8 +32,9 @@ namespace Ryujinx.Ava.Common.Locale
 
         private void Load()
         {
-            var localeLanguageCode = !string.IsNullOrEmpty(ConfigurationState.Instance.UI.LanguageCode.Value) ?
-                ConfigurationState.Instance.UI.LanguageCode.Value : CultureInfo.CurrentCulture.Name.Replace('-', '_');
+            var localeLanguageCode = !string.IsNullOrEmpty(ConfigurationState.Instance.UI.LanguageCode.Value)
+                ? ConfigurationState.Instance.UI.LanguageCode.Value
+                : CultureInfo.CurrentCulture.Name.Replace('-', '_');
 
             // Load en_US as default, if the target language translation is missing or incomplete.
             LoadDefaultLanguage();
@@ -99,7 +100,7 @@ namespace Ryujinx.Ava.Common.Locale
                 _ => false
             };
 
-        public static string FormatDynamicValue(LocaleKeys key, params object[] values) 
+        public static string FormatDynamicValue(LocaleKeys key, params object[] values)
             => Instance.UpdateAndGetDynamicValue(key, values);
 
         public string UpdateAndGetDynamicValue(LocaleKeys key, params object[] values)

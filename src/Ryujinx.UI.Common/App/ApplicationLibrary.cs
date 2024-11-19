@@ -12,6 +12,7 @@ using LibHac.Tools.Fs;
 using LibHac.Tools.FsSystem;
 using LibHac.Tools.FsSystem.NcaUtils;
 using Ryujinx.Common.Configuration;
+using Ryujinx.Common.Configuration.Multiplayer;
 using Ryujinx.Common.Logging;
 using Ryujinx.Common.Utilities;
 using Ryujinx.HLE.FileSystem;
@@ -27,10 +28,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
+using System.Threading.Tasks;
 using ContentType = LibHac.Ncm.ContentType;
 using MissingKeyException = LibHac.Common.Keys.MissingKeyException;
 using Path = System.IO.Path;
@@ -41,12 +44,18 @@ namespace Ryujinx.UI.App.Common
 {
     public class ApplicationLibrary
     {
+        public static string DefaultLanPlayWebHost = "ryuldnweb.vudjun.com";
         public Language DesiredLanguage { get; set; }
         public event EventHandler<ApplicationCountUpdatedEventArgs> ApplicationCountUpdated;
+        public event EventHandler<LdnGameDataReceivedEventArgs> LdnGameDataReceived;
 
         public readonly IObservableCache<ApplicationData, ulong> Applications;
-        public readonly IObservableCache<(TitleUpdateModel TitleUpdate, bool IsSelected), TitleUpdateModel> TitleUpdates;
-        public readonly IObservableCache<(DownloadableContentModel Dlc, bool IsEnabled), DownloadableContentModel> DownloadableContents;
+
+        public readonly IObservableCache<(TitleUpdateModel TitleUpdate, bool IsSelected), TitleUpdateModel>
+            TitleUpdates;
+
+        public readonly IObservableCache<(DownloadableContentModel Dlc, bool IsEnabled), DownloadableContentModel>
+            DownloadableContents;
 
         private readonly byte[] _nspIcon;
         private readonly byte[] _xciIcon;
@@ -58,10 +67,18 @@ namespace Ryujinx.UI.App.Common
         private readonly IntegrityCheckLevel _checkLevel;
         private CancellationTokenSource _cancellationToken;
         private readonly SourceCache<ApplicationData, ulong> _applications = new(it => it.Id);
-        private readonly SourceCache<(TitleUpdateModel TitleUpdate, bool IsSelected), TitleUpdateModel> _titleUpdates = new(it => it.TitleUpdate);
-        private readonly SourceCache<(DownloadableContentModel Dlc, bool IsEnabled), DownloadableContentModel> _downloadableContents = new(it => it.Dlc);
 
-        private static readonly ApplicationJsonSerializerContext _serializerContext = new(JsonHelper.GetDefaultSerializerOptions());
+        private readonly SourceCache<(TitleUpdateModel TitleUpdate, bool IsSelected), TitleUpdateModel> _titleUpdates =
+            new(it => it.TitleUpdate);
+
+        private readonly SourceCache<(DownloadableContentModel Dlc, bool IsEnabled), DownloadableContentModel>
+            _downloadableContents = new(it => it.Dlc);
+
+        private static readonly ApplicationJsonSerializerContext _serializerContext =
+            new(JsonHelper.GetDefaultSerializerOptions());
+
+        private static readonly LdnGameDataSerializerContext _ldnDataSerializerContext =
+            new(JsonHelper.GetDefaultSerializerOptions());
 
         public ApplicationLibrary(VirtualFileSystem virtualFileSystem, IntegrityCheckLevel checkLevel)
         {
@@ -96,11 +113,7 @@ namespace Ryujinx.UI.App.Common
         /// <exception cref="IOException">An I/O error occurred.</exception>
         private ApplicationData GetApplicationFromExeFs(PartitionFileSystem pfs, string filePath)
         {
-            ApplicationData data = new()
-            {
-                Icon = _nspIcon,
-                Path = filePath,
-            };
+            ApplicationData data = new() { Icon = _nspIcon, Path = filePath, };
 
             using UniqueRef<IFile> npdmFile = new();
 
@@ -158,7 +171,8 @@ namespace Ryujinx.UI.App.Common
                     }
                     catch (Exception exception)
                     {
-                        Logger.Warning?.Print(LogClass.Application, $"Encountered an error while trying to load applications from file '{filePath}': {exception}");
+                        Logger.Warning?.Print(LogClass.Application,
+                            $"Encountered an error while trying to load applications from file '{filePath}': {exception}");
 
                         return null;
                     }
@@ -178,7 +192,8 @@ namespace Ryujinx.UI.App.Common
                     case 1:
                         return applications[0];
                     case >= 1:
-                        Logger.Warning?.Print(LogClass.Application, $"File '{filePath}' contains more applications than expected: {applications.Count}");
+                        Logger.Warning?.Print(LogClass.Application,
+                            $"File '{filePath}' contains more applications than expected: {applications.Count}");
                         return applications[0];
                     default:
                         return null;
@@ -202,13 +217,10 @@ namespace Ryujinx.UI.App.Common
             var applications = new List<ApplicationData>();
             string extension = Path.GetExtension(filePath).ToLower();
 
-            foreach ((ulong titleId, ContentMetaData content) in pfs.GetContentData(ContentMetaType.Application, _virtualFileSystem, _checkLevel))
+            foreach ((ulong titleId, ContentMetaData content) in pfs.GetContentData(ContentMetaType.Application,
+                         _virtualFileSystem, _checkLevel))
             {
-                ApplicationData applicationData = new()
-                {
-                    Id = titleId,
-                    Path = filePath,
-                };
+                ApplicationData applicationData = new() { Id = titleId, Path = filePath, };
 
                 Nca mainNca = content.GetNcaByType(_virtualFileSystem.KeySet, ContentType.Program);
                 Nca controlNca = content.GetNcaByType(_virtualFileSystem.KeySet, ContentType.Control);
@@ -238,7 +250,8 @@ namespace Ryujinx.UI.App.Common
                 {
                     using UniqueRef<IFile> icon = new();
 
-                    controlFs.OpenFile(ref icon.Ref, $"/icon_{DesiredLanguage}.dat".ToU8Span(), OpenMode.Read).ThrowIfFailure();
+                    controlFs.OpenFile(ref icon.Ref, $"/icon_{DesiredLanguage}.dat".ToU8Span(), OpenMode.Read)
+                        .ThrowIfFailure();
 
                     using MemoryStream stream = new();
 
@@ -310,7 +323,8 @@ namespace Ryujinx.UI.App.Common
                         {
                             Xci xci = new(_virtualFileSystem.KeySet, file.AsStorage());
 
-                            applications = GetApplicationsFromPfs(xci.OpenPartition(XciPartitionType.Secure), applicationPath);
+                            applications = GetApplicationsFromPfs(xci.OpenPartition(XciPartitionType.Secure),
+                                applicationPath);
 
                             if (applications.Count == 0)
                             {
@@ -366,7 +380,8 @@ namespace Ryujinx.UI.App.Common
                                 }
 
                                 // Read the NACP data
-                                Read(assetOffset + (int)nacpOffset, (int)nacpSize).AsSpan().CopyTo(controlHolder.ByteSpan);
+                                Read(assetOffset + (int)nacpOffset, (int)nacpSize).AsSpan()
+                                    .CopyTo(controlHolder.ByteSpan);
 
                                 GetApplicationInformation(ref controlHolder.Value, ref application);
                             }
@@ -392,7 +407,8 @@ namespace Ryujinx.UI.App.Common
                         {
                             ApplicationData application = new();
 
-                            Nca nca = new(_virtualFileSystem.KeySet, new FileStream(applicationPath, FileMode.Open, FileAccess.Read).AsStorage());
+                            Nca nca = new(_virtualFileSystem.KeySet,
+                                new FileStream(applicationPath, FileMode.Open, FileAccess.Read).AsStorage());
 
                             if (!nca.IsProgram() || nca.IsPatch())
                             {
@@ -412,8 +428,7 @@ namespace Ryujinx.UI.App.Common
                         {
                             ApplicationData application = new()
                             {
-                                Icon = _nsoIcon,
-                                Name = Path.GetFileNameWithoutExtension(applicationPath),
+                                Icon = _nsoIcon, Name = Path.GetFileNameWithoutExtension(applicationPath),
                             };
 
                             applications.Add(application);
@@ -424,13 +439,15 @@ namespace Ryujinx.UI.App.Common
             }
             catch (MissingKeyException exception)
             {
-                Logger.Warning?.Print(LogClass.Application, $"Your key set is missing a key with the name: {exception.Name}");
+                Logger.Warning?.Print(LogClass.Application,
+                    $"Your key set is missing a key with the name: {exception.Name}");
 
                 return false;
             }
             catch (InvalidDataException)
             {
-                Logger.Warning?.Print(LogClass.Application, $"The header key is incorrect or missing and therefore the NCA header content type check has failed. Errored File: {applicationPath}");
+                Logger.Warning?.Print(LogClass.Application,
+                    $"The header key is incorrect or missing and therefore the NCA header content type check has failed. Errored File: {applicationPath}");
 
                 return false;
             }
@@ -442,7 +459,8 @@ namespace Ryujinx.UI.App.Common
             }
             catch (Exception exception)
             {
-                Logger.Warning?.Print(LogClass.Application, $"The file encountered was not of a valid type. File: '{applicationPath}' Error: {exception}");
+                Logger.Warning?.Print(LogClass.Application,
+                    $"The file encountered was not of a valid type. File: '{applicationPath}' Error: {exception}");
 
                 return false;
             }
@@ -474,7 +492,6 @@ namespace Ryujinx.UI.App.Common
                                 // Migration successful: deleting last_played from the metadata file.
                                 appMetadata.LastPlayedOld = default;
                             }
-
                         }
                     });
 
@@ -510,13 +527,15 @@ namespace Ryujinx.UI.App.Common
                                 ? IntegrityCheckLevel.ErrorOnInvalid
                                 : IntegrityCheckLevel.None;
 
-                            using IFileSystem pfs = PartitionFileSystemUtils.OpenApplicationFileSystem(filePath, _virtualFileSystem);
+                            using IFileSystem pfs =
+                                PartitionFileSystemUtils.OpenApplicationFileSystem(filePath, _virtualFileSystem);
 
                             foreach (DirectoryEntryEx fileEntry in pfs.EnumerateEntries("/", "*.nca"))
                             {
                                 using var ncaFile = new UniqueRef<IFile>();
 
-                                pfs.OpenFile(ref ncaFile.Ref, fileEntry.FullPath.ToU8Span(), OpenMode.Read).ThrowIfFailure();
+                                pfs.OpenFile(ref ncaFile.Ref, fileEntry.FullPath.ToU8Span(), OpenMode.Read)
+                                    .ThrowIfFailure();
 
                                 Nca nca = TryOpenNca(ncaFile.Get.AsStorage());
                                 if (nca == null)
@@ -526,7 +545,8 @@ namespace Ryujinx.UI.App.Common
 
                                 if (nca.Header.ContentType == NcaContentType.PublicData)
                                 {
-                                    titleUpdates.Add(new DownloadableContentModel(nca.Header.TitleId, filePath, fileEntry.FullPath));
+                                    titleUpdates.Add(new DownloadableContentModel(nca.Header.TitleId, filePath,
+                                        fileEntry.FullPath));
                                 }
                             }
 
@@ -536,11 +556,13 @@ namespace Ryujinx.UI.App.Common
             }
             catch (MissingKeyException exception)
             {
-                Logger.Warning?.Print(LogClass.Application, $"Your key set is missing a key with the name: {exception.Name}");
+                Logger.Warning?.Print(LogClass.Application,
+                    $"Your key set is missing a key with the name: {exception.Name}");
             }
             catch (InvalidDataException)
             {
-                Logger.Warning?.Print(LogClass.Application, $"The header key is incorrect or missing and therefore the NCA header content type check has failed. Errored File: {filePath}");
+                Logger.Warning?.Print(LogClass.Application,
+                    $"The header key is incorrect or missing and therefore the NCA header content type check has failed. Errored File: {filePath}");
             }
             catch (IOException exception)
             {
@@ -548,7 +570,8 @@ namespace Ryujinx.UI.App.Common
             }
             catch (Exception exception)
             {
-                Logger.Warning?.Print(LogClass.Application, $"The file encountered was not of a valid type. File: '{filePath}' Error: {exception}");
+                Logger.Warning?.Print(LogClass.Application,
+                    $"The file encountered was not of a valid type. File: '{filePath}' Error: {exception}");
             }
 
             return false;
@@ -615,11 +638,13 @@ namespace Ryujinx.UI.App.Common
             }
             catch (MissingKeyException exception)
             {
-                Logger.Warning?.Print(LogClass.Application, $"Your key set is missing a key with the name: {exception.Name}");
+                Logger.Warning?.Print(LogClass.Application,
+                    $"Your key set is missing a key with the name: {exception.Name}");
             }
             catch (InvalidDataException)
             {
-                Logger.Warning?.Print(LogClass.Application, $"The header key is incorrect or missing and therefore the NCA header content type check has failed. Errored File: {filePath}");
+                Logger.Warning?.Print(LogClass.Application,
+                    $"The header key is incorrect or missing and therefore the NCA header content type check has failed. Errored File: {filePath}");
             }
             catch (IOException exception)
             {
@@ -627,7 +652,8 @@ namespace Ryujinx.UI.App.Common
             }
             catch (Exception exception)
             {
-                Logger.Warning?.Print(LogClass.Application, $"The file encountered was not of a valid type. File: '{filePath}' Error: {exception}");
+                Logger.Warning?.Print(LogClass.Application,
+                    $"The file encountered was not of a valid type. File: '{filePath}' Error: {exception}");
             }
 
             return false;
@@ -668,27 +694,30 @@ namespace Ryujinx.UI.App.Common
 
                     if (!Directory.Exists(appDir))
                     {
-                        Logger.Warning?.Print(LogClass.Application, $"The specified game directory \"{appDir}\" does not exist.");
+                        Logger.Warning?.Print(LogClass.Application,
+                            $"The specified game directory \"{appDir}\" does not exist.");
 
                         continue;
                     }
 
                     try
                     {
-                        EnumerationOptions options = new()
-                        {
-                            RecurseSubdirectories = true,
-                            IgnoreInaccessible = false
-                        };
+                        EnumerationOptions options = new() { RecurseSubdirectories = true, IgnoreInaccessible = false };
 
                         IEnumerable<string> files = Directory.EnumerateFiles(appDir, "*", options)
                             .Where(file =>
-                                (Path.GetExtension(file).ToLower() is ".nsp" && ConfigurationState.Instance.UI.ShownFileTypes.NSP) ||
-                                (Path.GetExtension(file).ToLower() is ".pfs0" && ConfigurationState.Instance.UI.ShownFileTypes.PFS0) ||
-                                (Path.GetExtension(file).ToLower() is ".xci" && ConfigurationState.Instance.UI.ShownFileTypes.XCI) ||
-                                (Path.GetExtension(file).ToLower() is ".nca" && ConfigurationState.Instance.UI.ShownFileTypes.NCA) ||
-                                (Path.GetExtension(file).ToLower() is ".nro" && ConfigurationState.Instance.UI.ShownFileTypes.NRO) || 
-                                (Path.GetExtension(file).ToLower() is ".nso" && ConfigurationState.Instance.UI.ShownFileTypes.NSO)
+                                (Path.GetExtension(file).ToLower() is ".nsp" &&
+                                 ConfigurationState.Instance.UI.ShownFileTypes.NSP) ||
+                                (Path.GetExtension(file).ToLower() is ".pfs0" &&
+                                 ConfigurationState.Instance.UI.ShownFileTypes.PFS0) ||
+                                (Path.GetExtension(file).ToLower() is ".xci" &&
+                                 ConfigurationState.Instance.UI.ShownFileTypes.XCI) ||
+                                (Path.GetExtension(file).ToLower() is ".nca" &&
+                                 ConfigurationState.Instance.UI.ShownFileTypes.NCA) ||
+                                (Path.GetExtension(file).ToLower() is ".nro" &&
+                                 ConfigurationState.Instance.UI.ShownFileTypes.NRO) ||
+                                (Path.GetExtension(file).ToLower() is ".nso" &&
+                                 ConfigurationState.Instance.UI.ShownFileTypes.NSO)
                             );
 
                         foreach (string app in files)
@@ -709,7 +738,8 @@ namespace Ryujinx.UI.App.Common
                             }
                             catch (IOException exception)
                             {
-                                Logger.Warning?.Print(LogClass.Application, $"Failed to resolve the full path to file: \"{app}\" Error: {exception}");
+                                Logger.Warning?.Print(LogClass.Application,
+                                    $"Failed to resolve the full path to file: \"{app}\" Error: {exception}");
                             }
                         }
                     }
@@ -718,6 +748,7 @@ namespace Ryujinx.UI.App.Common
                         Logger.Warning?.Print(LogClass.Application, $"Failed to get access to directory: \"{appDir}\"");
                     }
                 }
+
 
                 // Loops through applications list, creating a struct and then firing an event containing the struct for each application
                 foreach (string applicationPath in applicationPaths)
@@ -757,15 +788,13 @@ namespace Ryujinx.UI.App.Common
 
                     OnApplicationCountUpdated(new ApplicationCountUpdatedEventArgs
                     {
-                        NumAppsFound = numApplicationsFound,
-                        NumAppsLoaded = numApplicationsLoaded,
+                        NumAppsFound = numApplicationsFound, NumAppsLoaded = numApplicationsLoaded,
                     });
                 }
 
                 OnApplicationCountUpdated(new ApplicationCountUpdatedEventArgs
                 {
-                    NumAppsFound = numApplicationsFound,
-                    NumAppsLoaded = numApplicationsLoaded,
+                    NumAppsFound = numApplicationsFound, NumAppsLoaded = numApplicationsLoaded,
                 });
             }
             finally
@@ -775,8 +804,45 @@ namespace Ryujinx.UI.App.Common
             }
         }
 
+        public async Task RefreshLdn()
+        {
+            if (ConfigurationState.Instance.Multiplayer.Mode == MultiplayerMode.LdnRyu)
+            {
+                try
+                {
+                    string ldnWebHost = ConfigurationState.Instance.Multiplayer.LdnServer;
+                    if (string.IsNullOrEmpty(ldnWebHost))
+                    {
+                        ldnWebHost = DefaultLanPlayWebHost;
+                    }
+
+                    IEnumerable<LdnGameData> ldnGameDataArray = Array.Empty<LdnGameData>();
+                    using HttpClient httpClient = new HttpClient();
+                    string ldnGameDataArrayString =
+                        await httpClient.GetStringAsync($"https://{ldnWebHost}/api/public_games");
+                    ldnGameDataArray = JsonHelper.Deserialize(ldnGameDataArrayString,
+                        _ldnDataSerializerContext.IEnumerableLdnGameData);
+                    var evt = new LdnGameDataReceivedEventArgs { LdnData = ldnGameDataArray };
+                    LdnGameDataReceived?.Invoke(null, evt);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warning?.Print(LogClass.Application,
+                        $"Failed to fetch the public games JSON from the API. Player and game count in the game list will be unavailable.\n{ex.Message}");
+                    LdnGameDataReceived?.Invoke(null,
+                        new LdnGameDataReceivedEventArgs() { LdnData = Array.Empty<LdnGameData>() });
+                }
+            }
+            else
+            {
+                LdnGameDataReceived?.Invoke(null,
+                    new LdnGameDataReceivedEventArgs() { LdnData = Array.Empty<LdnGameData>() });
+            }
+        }
+
         // Replace the currently stored DLC state for the game with the provided DLC state.
-        public void SaveDownloadableContentsForGame(ApplicationData application, List<(DownloadableContentModel, bool IsEnabled)> dlcs)
+        public void SaveDownloadableContentsForGame(ApplicationData application,
+            List<(DownloadableContentModel, bool IsEnabled)> dlcs)
         {
             _downloadableContents.Edit(it =>
             {
@@ -788,7 +854,8 @@ namespace Ryujinx.UI.App.Common
         }
 
         // Replace the currently stored update state for the game with the provided update state.
-        public void SaveTitleUpdatesForGame(ApplicationData application, List<(TitleUpdateModel, bool IsSelected)> updates)
+        public void SaveTitleUpdatesForGame(ApplicationData application,
+            List<(TitleUpdateModel, bool IsSelected)> updates)
         {
             _titleUpdates.Edit(it =>
             {
@@ -844,8 +911,7 @@ namespace Ryujinx.UI.App.Common
                     {
                         EnumerationOptions options = new()
                         {
-                            RecurseSubdirectories = true,
-                            IgnoreInaccessible = false,
+                            RecurseSubdirectories = true, IgnoreInaccessible = false,
                         };
 
                         IEnumerable<string> files = Directory.EnumerateFiles(appDir, "*", options).Where(
@@ -940,7 +1006,8 @@ namespace Ryujinx.UI.App.Common
                 );
                 _titleUpdates.RemoveKeys(updatesToRemove.Select(it => it.TitleUpdate));
                 titleIdsToSave.UnionWith(updatesToRemove.Select(it => it.TitleUpdate.TitleIdBase));
-                titleIdsToRefresh.UnionWith(updatesToRemove.Where(it => it.IsSelected).Select(update => update.TitleUpdate.TitleIdBase));
+                titleIdsToRefresh.UnionWith(updatesToRemove.Where(it => it.IsSelected)
+                    .Select(update => update.TitleUpdate.TitleIdBase));
 
                 foreach (string appDir in appDirs)
                 {
@@ -963,8 +1030,7 @@ namespace Ryujinx.UI.App.Common
                     {
                         EnumerationOptions options = new()
                         {
-                            RecurseSubdirectories = true,
-                            IgnoreInaccessible = false,
+                            RecurseSubdirectories = true, IgnoreInaccessible = false,
                         };
 
                         IEnumerable<string> files = Directory.EnumerateFiles(appDir, "*", options).Where(
@@ -1062,7 +1128,8 @@ namespace Ryujinx.UI.App.Common
             ApplicationCountUpdated?.Invoke(null, e);
         }
 
-        public static ApplicationMetadata LoadAndSaveMetaData(string titleId, Action<ApplicationMetadata> modifyFunction = null)
+        public static ApplicationMetadata LoadAndSaveMetaData(string titleId,
+            Action<ApplicationMetadata> modifyFunction = null)
         {
             string metadataFolder = Path.Combine(AppDataManager.GamesDirPath, titleId, "gui");
             string metadataFile = Path.Combine(metadataFolder, "metadata.json");
@@ -1084,7 +1151,8 @@ namespace Ryujinx.UI.App.Common
             }
             catch (JsonException)
             {
-                Logger.Warning?.Print(LogClass.Application, $"Failed to parse metadata json for {titleId}. Loading defaults.");
+                Logger.Warning?.Print(LogClass.Application,
+                    $"Failed to parse metadata json for {titleId}. Loading defaults.");
 
                 appMetadata = new ApplicationMetadata();
             }
@@ -1167,14 +1235,17 @@ namespace Ryujinx.UI.App.Common
                             else
                             {
                                 // Store the ControlFS in variable called controlFs
-                                Dictionary<ulong, ContentMetaData> programs = pfs.GetContentData(ContentMetaType.Application, _virtualFileSystem, _checkLevel);
+                                Dictionary<ulong, ContentMetaData> programs =
+                                    pfs.GetContentData(ContentMetaType.Application, _virtualFileSystem, _checkLevel);
                                 IFileSystem controlFs = null;
 
                                 if (programs.TryGetValue(applicationId, out ContentMetaData value))
                                 {
-                                    if (value.GetNcaByType(_virtualFileSystem.KeySet, ContentType.Control) is { } controlNca)
+                                    if (value.GetNcaByType(_virtualFileSystem.KeySet, ContentType.Control) is
+                                        { } controlNca)
                                     {
-                                        controlFs = controlNca.OpenFileSystem(NcaSectionType.Data, IntegrityCheckLevel.None);
+                                        controlFs = controlNca.OpenFileSystem(NcaSectionType.Data,
+                                            IntegrityCheckLevel.None);
                                     }
                                 }
 
@@ -1183,7 +1254,8 @@ namespace Ryujinx.UI.App.Common
                                 {
                                     using var icon = new UniqueRef<IFile>();
 
-                                    controlFs.OpenFile(ref icon.Ref, $"/icon_{desiredTitleLanguage}.dat".ToU8Span(), OpenMode.Read).ThrowIfFailure();
+                                    controlFs.OpenFile(ref icon.Ref, $"/icon_{desiredTitleLanguage}.dat".ToU8Span(),
+                                        OpenMode.Read).ThrowIfFailure();
 
                                     using MemoryStream stream = new();
 
@@ -1201,7 +1273,8 @@ namespace Ryujinx.UI.App.Common
 
                                         using var icon = new UniqueRef<IFile>();
 
-                                        controlFs.OpenFile(ref icon.Ref, entry.FullPath.ToU8Span(), OpenMode.Read).ThrowIfFailure();
+                                        controlFs.OpenFile(ref icon.Ref, entry.FullPath.ToU8Span(), OpenMode.Read)
+                                            .ThrowIfFailure();
 
                                         using MemoryStream stream = new();
                                         icon.Get.AsStream().CopyTo(stream);
@@ -1224,7 +1297,8 @@ namespace Ryujinx.UI.App.Common
                         }
                         catch (Exception exception)
                         {
-                            Logger.Warning?.Print(LogClass.Application, $"The file encountered was not of a valid type. File: '{applicationPath}' Error: {exception}");
+                            Logger.Warning?.Print(LogClass.Application,
+                                $"The file encountered was not of a valid type. File: '{applicationPath}' Error: {exception}");
                         }
                     }
                     else if (extension == ".nro")
@@ -1268,7 +1342,8 @@ namespace Ryujinx.UI.App.Common
                         }
                         catch
                         {
-                            Logger.Warning?.Print(LogClass.Application, $"The file encountered was not of a valid type. Errored File: {applicationPath}");
+                            Logger.Warning?.Print(LogClass.Application,
+                                $"The file encountered was not of a valid type. Errored File: {applicationPath}");
                         }
                     }
                     else if (extension == ".nca")
@@ -1284,7 +1359,8 @@ namespace Ryujinx.UI.App.Common
             }
             catch (Exception)
             {
-                Logger.Warning?.Print(LogClass.Application, $"Could not retrieve a valid icon for the app. Default icon will be used. Errored File: {applicationPath}");
+                Logger.Warning?.Print(LogClass.Application,
+                    $"Could not retrieve a valid icon for the app. Default icon will be used. Errored File: {applicationPath}");
             }
 
             return applicationIcon ?? _ncaIcon;
@@ -1358,7 +1434,8 @@ namespace Ryujinx.UI.App.Common
 
             try
             {
-                (Nca patchNca, Nca controlNca) = mainNca.GetUpdateData(_virtualFileSystem, _checkLevel, 0, out updatePath);
+                (Nca patchNca, Nca controlNca) =
+                    mainNca.GetUpdateData(_virtualFileSystem, _checkLevel, 0, out updatePath);
 
                 if (patchNca != null && controlNca != null)
                 {
@@ -1369,11 +1446,13 @@ namespace Ryujinx.UI.App.Common
             }
             catch (InvalidDataException)
             {
-                Logger.Warning?.Print(LogClass.Application, $"The header key is incorrect or missing and therefore the NCA header content type check has failed. Errored File: {updatePath}");
+                Logger.Warning?.Print(LogClass.Application,
+                    $"The header key is incorrect or missing and therefore the NCA header content type check has failed. Errored File: {updatePath}");
             }
             catch (MissingKeyException exception)
             {
-                Logger.Warning?.Print(LogClass.Application, $"Your key set is missing a key with the name: {exception.Name}. Errored File: {updatePath}");
+                Logger.Warning?.Print(LogClass.Application,
+                    $"Your key set is missing a key with the name: {exception.Name}. Errored File: {updatePath}");
             }
 
             return false;
@@ -1453,7 +1532,9 @@ namespace Ryujinx.UI.App.Common
                                 shouldSelect = true;
                                 if (selectedUpdate.HasValue)
                                     _titleUpdates.AddOrUpdate((selectedUpdate.Value.Item1, false));
-                                selectedUpdate = DynamicData.Kernel.Optional<(TitleUpdateModel, bool IsSelected)>.Create((update, true));
+                                selectedUpdate =
+                                    DynamicData.Kernel.Optional<(TitleUpdateModel, bool IsSelected)>.Create((update,
+                                        true));
                             }
 
                             modifiedVersion = modifiedVersion || shouldSelect;
@@ -1465,7 +1546,8 @@ namespace Ryujinx.UI.App.Common
 
                     if (updatesChanged)
                     {
-                        var gameUpdates = it.Items.Where(update => update.TitleUpdate.TitleIdBase == application.IdBase).ToList();
+                        var gameUpdates = it.Items.Where(update => update.TitleUpdate.TitleIdBase == application.IdBase)
+                            .ToList();
                         TitleUpdatesHelper.SaveTitleUpdatesJson(_virtualFileSystem, application.IdBase, gameUpdates);
                     }
                 }

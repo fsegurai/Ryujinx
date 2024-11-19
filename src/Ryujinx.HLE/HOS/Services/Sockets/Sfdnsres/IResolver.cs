@@ -65,7 +65,8 @@ namespace Ryujinx.HLE.HOS.Services.Sockets.Sfdnsres
             ulong outputBufferPosition = context.Request.ReceiveBuff[0].Position;
             ulong outputBufferSize = context.Request.ReceiveBuff[0].Size;
 
-            return GetHostByNameRequestImpl(context, inputBufferPosition, inputBufferSize, outputBufferPosition, outputBufferSize, false, 0, 0);
+            return GetHostByNameRequestImpl(context, inputBufferPosition, inputBufferSize, outputBufferPosition,
+                outputBufferSize, false, 0, 0);
         }
 
         [CommandCmif(3)]
@@ -78,7 +79,8 @@ namespace Ryujinx.HLE.HOS.Services.Sockets.Sfdnsres
             ulong outputBufferPosition = context.Request.ReceiveBuff[0].Position;
             ulong outputBufferSize = context.Request.ReceiveBuff[0].Size;
 
-            return GetHostByAddrRequestImpl(context, inputBufferPosition, inputBufferSize, outputBufferPosition, outputBufferSize, false, 0, 0);
+            return GetHostByAddrRequestImpl(context, inputBufferPosition, inputBufferSize, outputBufferPosition,
+                outputBufferSize, false, 0, 0);
         }
 
         [CommandCmif(4)]
@@ -241,7 +243,8 @@ namespace Ryujinx.HLE.HOS.Services.Sockets.Sfdnsres
             (ulong outputBufferPosition, ulong outputBufferSize) = context.Request.GetBufferType0x22();
             (ulong optionsBufferPosition, ulong optionsBufferSize) = context.Request.GetBufferType0x21();
 
-            return GetAddrInfoRequestImpl(context, outputBufferPosition, outputBufferSize, true, optionsBufferPosition, optionsBufferSize);
+            return GetAddrInfoRequestImpl(context, outputBufferPosition, outputBufferSize, true, optionsBufferPosition,
+                optionsBufferSize);
         }
 
         [CommandCmif(14)] // 5.0.0+
@@ -292,7 +295,7 @@ namespace Ryujinx.HLE.HOS.Services.Sockets.Sfdnsres
         {
             string host = MemoryHelper.ReadAsciiString(context.Memory, inputBufferPosition, (int)inputBufferSize);
 
-            if (!context.Device.Configuration.EnableInternetAccess)
+            if (host != "localhost" && !context.Device.Configuration.EnableInternetAccess)
             {
                 Logger.Info?.Print(LogClass.ServiceSfdnsres, $"Guest network access disabled, DNS Blocked: {host}");
 
@@ -370,7 +373,8 @@ namespace Ryujinx.HLE.HOS.Services.Sockets.Sfdnsres
                 else
                 {
                     errno = GaiError.Success;
-                    serializedSize = SerializeHostEntries(context, outputBufferPosition, outputBufferSize, hostEntry, addresses);
+                    serializedSize = SerializeHostEntries(context, outputBufferPosition, outputBufferSize, hostEntry,
+                        addresses);
                 }
             }
 
@@ -443,7 +447,8 @@ namespace Ryujinx.HLE.HOS.Services.Sockets.Sfdnsres
             if (hostEntry != null)
             {
                 errno = GaiError.Success;
-                serializedSize = SerializeHostEntries(context, outputBufferPosition, outputBufferSize, hostEntry, GetIpv4Addresses(hostEntry));
+                serializedSize = SerializeHostEntries(context, outputBufferPosition, outputBufferSize, hostEntry,
+                    GetIpv4Addresses(hostEntry));
             }
 
             WriteResponse(context, withOptions, serializedSize, errno, netDbErrorCode);
@@ -451,7 +456,8 @@ namespace Ryujinx.HLE.HOS.Services.Sockets.Sfdnsres
             return ResultCode.Success;
         }
 
-        private static int SerializeHostEntries(ServiceCtx context, ulong outputBufferPosition, ulong outputBufferSize, IPHostEntry hostEntry, IEnumerable<IPAddress> addresses = null)
+        private static int SerializeHostEntries(ServiceCtx context, ulong outputBufferPosition, ulong outputBufferSize,
+            IPHostEntry hostEntry, IEnumerable<IPAddress> addresses = null)
         {
             ulong originalBufferPosition = outputBufferPosition;
             ulong bufferPosition = originalBufferPosition;
@@ -482,14 +488,16 @@ namespace Ryujinx.HLE.HOS.Services.Sockets.Sfdnsres
             bufferPosition += sizeof(short);
 
             // Ip address count, we can only support ipv4 (blame Nintendo)
-            context.Memory.Write(bufferPosition, addresses != null ? BinaryPrimitives.ReverseEndianness(addresses.Count()) : 0);
+            context.Memory.Write(bufferPosition,
+                addresses != null ? BinaryPrimitives.ReverseEndianness(addresses.Count()) : 0);
             bufferPosition += sizeof(int);
 
             if (addresses != null)
             {
                 foreach (IPAddress ip in addresses)
                 {
-                    context.Memory.Write(bufferPosition, BinaryPrimitives.ReverseEndianness(BitConverter.ToInt32(ip.GetAddressBytes(), 0)));
+                    context.Memory.Write(bufferPosition,
+                        BinaryPrimitives.ReverseEndianness(BitConverter.ToInt32(ip.GetAddressBytes(), 0)));
                     bufferPosition += sizeof(int);
                 }
             }
@@ -510,8 +518,10 @@ namespace Ryujinx.HLE.HOS.Services.Sockets.Sfdnsres
             uint cancelHandle = context.RequestData.ReadUInt32();
 #pragma warning restore IDE0059
 
-            string host = MemoryHelper.ReadAsciiString(context.Memory, context.Request.SendBuff[0].Position, (long)context.Request.SendBuff[0].Size);
-            string service = MemoryHelper.ReadAsciiString(context.Memory, context.Request.SendBuff[1].Position, (long)context.Request.SendBuff[1].Size);
+            string host = MemoryHelper.ReadAsciiString(context.Memory, context.Request.SendBuff[0].Position,
+                (long)context.Request.SendBuff[0].Size);
+            string service = MemoryHelper.ReadAsciiString(context.Memory, context.Request.SendBuff[1].Position,
+                (long)context.Request.SendBuff[1].Size);
 
             if (!context.Device.Configuration.EnableInternetAccess)
             {
@@ -524,7 +534,8 @@ namespace Ryujinx.HLE.HOS.Services.Sockets.Sfdnsres
 
             // NOTE: We ignore hints for now.
 #pragma warning disable IDE0059 // Remove unnecessary value assignment
-            List<AddrInfoSerialized> hints = DeserializeAddrInfos(context.Memory, context.Request.SendBuff[2].Position, context.Request.SendBuff[2].Size);
+            List<AddrInfoSerialized> hints = DeserializeAddrInfos(context.Memory, context.Request.SendBuff[2].Position,
+                context.Request.SendBuff[2].Size);
 #pragma warning restore IDE0059
 
             if (withOptions)
@@ -589,7 +600,8 @@ namespace Ryujinx.HLE.HOS.Services.Sockets.Sfdnsres
                 if (int.TryParse(service, out int port) || string.IsNullOrEmpty(service))
                 {
                     errno = GaiError.Success;
-                    serializedSize = SerializeAddrInfos(context, responseBufferPosition, responseBufferSize, hostEntry, port);
+                    serializedSize = SerializeAddrInfos(context, responseBufferPosition, responseBufferSize, hostEntry,
+                        port);
                 }
                 else
                 {
@@ -602,7 +614,8 @@ namespace Ryujinx.HLE.HOS.Services.Sockets.Sfdnsres
             return ResultCode.Success;
         }
 
-        private static List<AddrInfoSerialized> DeserializeAddrInfos(IVirtualMemoryManager memory, ulong address, ulong size)
+        private static List<AddrInfoSerialized> DeserializeAddrInfos(IVirtualMemoryManager memory, ulong address,
+            ulong size)
         {
             List<AddrInfoSerialized> result = new();
 
@@ -623,7 +636,8 @@ namespace Ryujinx.HLE.HOS.Services.Sockets.Sfdnsres
             return result;
         }
 
-        private static int SerializeAddrInfos(ServiceCtx context, ulong responseBufferPosition, ulong responseBufferSize, IPHostEntry hostEntry, int port)
+        private static int SerializeAddrInfos(ServiceCtx context, ulong responseBufferPosition,
+            ulong responseBufferSize, IPHostEntry hostEntry, int port)
         {
             ulong originalBufferPosition = responseBufferPosition;
 #pragma warning disable IDE0059 // Remove unnecessary value assignment
@@ -632,7 +646,8 @@ namespace Ryujinx.HLE.HOS.Services.Sockets.Sfdnsres
             byte[] hostName = Encoding.ASCII.GetBytes(hostEntry.HostName + '\0');
 #pragma warning restore IDE0059
 
-            using WritableRegion region = context.Memory.GetWritableRegion(responseBufferPosition, (int)responseBufferSize);
+            using WritableRegion region =
+                context.Memory.GetWritableRegion(responseBufferPosition, (int)responseBufferSize);
 
             Span<byte> data = region.Memory.Span;
 
