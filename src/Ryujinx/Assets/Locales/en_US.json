@@ -753,6 +753,8 @@
   "DlcWindowTitle": "Manage Downloadable Content for {0} ({1})",
   "ModWindowTitle": "Manage Mods for {0} ({1})",
   "UpdateWindowTitle": "Title Update Manager",
+  "XCITrimmerTrim": "Trim",
+  "XCITrimmerUntrim": "Untrim",
   "XCITrimmerWindowTitle": "XCI File Trimmer",
   "XCITrimmerTitleStatusCount": "{0} of {1} Title(s) Selected",
   "XCITrimmerTitleStatusCountWithFilter": "{0} of {1} Title(s) Selected ({2} displayed)",

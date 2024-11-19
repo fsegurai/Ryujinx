@@ -754,6 +754,8 @@
   "DlcWindowTitle": "Gestisci DLC per {0} ({1})",
   "ModWindowTitle": "Gestisci mod per {0} ({1})",
   "UpdateWindowTitle": "Gestione aggiornamenti",
+  "XCITrimmerTrim": "Trim",
+  "XCITrimmerUntrim": "Untrim",
   "XCITrimmerWindowTitle": "XCI File Trimmer",
   "XCITrimmerTitleStatusCount": "{0} di {1} Titolo(i) Selezionati",
   "XCITrimmerTitleStatusCountWithFilter": "{0} of {1} Titolo(i) Selezionati ({2} visualizzato)",

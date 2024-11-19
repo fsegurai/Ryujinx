@@ -726,6 +726,8 @@
   "DlcWindowTitle": "Gérer le contenu téléchargeable pour {0} ({1})",
   "ModWindowTitle": "Gérer les mods pour {0} ({1})",
   "UpdateWindowTitle": "Gestionnaire de mises à jour",
+  "XCITrimmerTrim": "Trim",
+  "XCITrimmerUntrim": "Untrim",
   "UpdateWindowUpdateAddedMessage": "{0} nouvelle(s) mise(s) à jour ajoutée(s)",
   "UpdateWindowBundledContentNotice": "Les mises à jour incluses avec le jeu ne peuvent pas être supprimées mais peuvent être désactivées.",
   "CheatWindowHeading": "Cheats disponibles pour {0} [{1}]",
