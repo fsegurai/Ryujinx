@@ -108,6 +108,7 @@ jobs:
           sed -r --in-place 's/\%\%RYUJINX_TARGET_RELEASE_CHANNEL_REPO\%\%/${{ env.RYUJINX_TARGET_RELEASE_CHANNEL_REPO }}/g;' src/Ryujinx.Common/ReleaseInformation.cs
           sed -r --in-place 's/\%\%RYUJINX_TARGET_RELEASE_CHANNEL_SOURCE_REPO\%\%/${{ env.RYUJINX_TARGET_RELEASE_CHANNEL_SOURCE_REPO }}/g;' src/Ryujinx.Common/ReleaseInformation.cs
           sed -r --in-place 's/\%\%RYUJINX_CONFIG_FILE_NAME\%\%/Config\.json/g;' src/Ryujinx.Common/ReleaseInformation.cs
+          sed -r --in-place '/^Name=Ryujinx$/s/Name=Ryujinx/Name=Ryujinx-Canary/' distribution/linux/Ryujinx.desktop
         shell: bash
 
       - name: Create output dir
@@ -123,12 +124,12 @@ jobs:
         run: |
           pushd publish
           rm libarmeilleure-jitsupport.dylib
-          7z a ../release_output/canary-ryujinx-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.zip ../publish
+          7z a ../release_output/ryujinx-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.zip ../publish
           popd
 
           pushd publish_sdl2_headless
           rm libarmeilleure-jitsupport.dylib
-          7z a ../release_output/canary-sdl2-ryujinx-headless-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.zip ../publish
+          7z a ../release_output/sdl2-ryujinx-headless-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.zip ../publish
           popd
         shell: bash
 
@@ -165,8 +166,8 @@ jobs:
           
           pushd publish_appimage
           
-          mv Ryujinx.AppImage ../release_output/canary-ryujinx-$BUILD_VERSION-$ARCH_NAME.AppImage
-          mv Ryujinx.AppImage.zsync ../release_output/canary-ryujinx-$BUILD_VERSION-$ARCH_NAME.AppImage.zsync
+          mv Ryujinx.AppImage ../release_output/ryujinx-$BUILD_VERSION-$ARCH_NAME.AppImage
+          mv Ryujinx.AppImage.zsync ../release_output/ryujinx-$BUILD_VERSION-$ARCH_NAME.AppImage.zsync
           popd
         shell: bash
 
@@ -176,13 +177,13 @@ jobs:
           pushd publish
           rm libarmeilleure-jitsupport.dylib
           chmod +x Ryujinx.sh Ryujinx
-          tar -czvf ../release_output/canary-ryujinx-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.tar.gz ../publish
+          tar -czvf ../release_output/ryujinx-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.tar.gz ../publish
           popd
 
           pushd publish_sdl2_headless
           rm libarmeilleure-jitsupport.dylib
           chmod +x Ryujinx.sh Ryujinx.Headless.SDL2
-          tar -czvf ../release_output/canary-sdl2-ryujinx-headless-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.tar.gz ../publish
+          tar -czvf ../release_output/sdl2-ryujinx-headless-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.tar.gz ../publish
           popd
         shell: bash
 
