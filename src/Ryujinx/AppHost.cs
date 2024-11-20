@@ -99,8 +99,9 @@ namespace Ryujinx.Ava
             ForceChangeCursor
         };
 
-        private CursorStates _cursorState = !ConfigurationState.Instance.Hid.EnableMouse.Value ?
-            CursorStates.CursorIsVisible : CursorStates.CursorIsHidden;
+        private CursorStates _cursorState = !ConfigurationState.Instance.Hid.EnableMouse.Value
+            ? CursorStates.CursorIsVisible
+            : CursorStates.CursorIsHidden;
 
         private DateTime _lastShaderReset;
         private uint _displayCount;
@@ -207,6 +208,9 @@ namespace Ryujinx.Ava
             ConfigurationState.Instance.System.EnableInternetAccess.Event += UpdateEnableInternetAccessState;
             ConfigurationState.Instance.Multiplayer.LanInterfaceId.Event += UpdateLanInterfaceIdState;
             ConfigurationState.Instance.Multiplayer.Mode.Event += UpdateMultiplayerModeState;
+            ConfigurationState.Instance.Multiplayer.LdnPassphrase.Event += UpdateLdnPassphraseState;
+            ConfigurationState.Instance.Multiplayer.LdnServer.Event += UpdateLdnServerState;
+            ConfigurationState.Instance.Multiplayer.DisableP2p.Event += UpdateDisableP2pState;
 
             _gpuCancellationTokenSource = new CancellationTokenSource();
             _gpuDoneEvent = new ManualResetEvent(false);
@@ -240,10 +244,10 @@ namespace Ryujinx.Ava
                 }
 
                 _isCursorInRenderer = point.X >= bounds.X &&
-                    Math.Ceiling(point.X) <= (int)window.Bounds.Width &&
-                    point.Y >= windowYOffset &&
-                    point.Y <= windowYLimit &&
-                    !_viewModel.IsSubMenuOpen;
+                                      Math.Ceiling(point.X) <= (int)window.Bounds.Width &&
+                                      point.Y >= windowYOffset &&
+                                      point.Y <= windowYLimit &&
+                                      !_viewModel.IsSubMenuOpen;
 
                 _ignoreCursorState = false;
             }
@@ -267,9 +271,9 @@ namespace Ryujinx.Ava
                 }
 
                 _ignoreCursorState = (point.X == bounds.X ||
-                    Math.Ceiling(point.X) == (int)window.Bounds.Width) &&
-                    point.Y >= windowYOffset &&
-                    point.Y <= windowYLimit;
+                                      Math.Ceiling(point.X) == (int)window.Bounds.Width) &&
+                                     point.Y >= windowYOffset &&
+                                     point.Y <= windowYLimit;
             }
 
             _cursorState = CursorStates.ForceChangeCursor;
@@ -277,19 +281,22 @@ namespace Ryujinx.Ava
 
         private void UpdateScalingFilterLevel(object sender, ReactiveEventArgs<int> e)
         {
-            _renderer.Window?.SetScalingFilter((Graphics.GAL.ScalingFilter)ConfigurationState.Instance.Graphics.ScalingFilter.Value);
+            _renderer.Window?.SetScalingFilter(
+                (Graphics.GAL.ScalingFilter)ConfigurationState.Instance.Graphics.ScalingFilter.Value);
             _renderer.Window?.SetScalingFilterLevel(ConfigurationState.Instance.Graphics.ScalingFilterLevel.Value);
         }
 
         private void UpdateScalingFilter(object sender, ReactiveEventArgs<ScalingFilter> e)
         {
-            _renderer.Window?.SetScalingFilter((Graphics.GAL.ScalingFilter)ConfigurationState.Instance.Graphics.ScalingFilter.Value);
+            _renderer.Window?.SetScalingFilter(
+                (Graphics.GAL.ScalingFilter)ConfigurationState.Instance.Graphics.ScalingFilter.Value);
             _renderer.Window?.SetScalingFilterLevel(ConfigurationState.Instance.Graphics.ScalingFilterLevel.Value);
         }
 
         private void UpdateColorSpacePassthrough(object sender, ReactiveEventArgs<bool> e)
         {
-            _renderer.Window?.SetColorSpacePassthrough((bool)ConfigurationState.Instance.Graphics.EnableColorSpacePassthrough.Value);
+            _renderer.Window?.SetColorSpacePassthrough((bool)ConfigurationState.Instance.Graphics
+                .EnableColorSpacePassthrough.Value);
         }
 
         private void ShowCursor()
@@ -347,12 +354,15 @@ namespace Ryujinx.Ava
                         string sanitizedApplicationName = FileSystemUtils.SanitizeFileName(applicationName);
                         DateTime currentTime = DateTime.Now;
 
-                        string filename = $"{sanitizedApplicationName}_{currentTime.Year}-{currentTime.Month:D2}-{currentTime.Day:D2}_{currentTime.Hour:D2}-{currentTime.Minute:D2}-{currentTime.Second:D2}.png";
+                        string filename =
+                            $"{sanitizedApplicationName}_{currentTime.Year}-{currentTime.Month:D2}-{currentTime.Day:D2}_{currentTime.Hour:D2}-{currentTime.Minute:D2}-{currentTime.Second:D2}.png";
 
                         string directory = AppDataManager.Mode switch
                         {
-                            AppDataManager.LaunchMode.Portable or AppDataManager.LaunchMode.Custom => Path.Combine(AppDataManager.BaseDirPath, "screenshots"),
-                            _ => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "Ryujinx"),
+                            AppDataManager.LaunchMode.Portable or AppDataManager.LaunchMode.Custom => Path.Combine(
+                                AppDataManager.BaseDirPath, "screenshots"),
+                            _ => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
+                                "Ryujinx"),
                         };
 
                         string path = Path.Combine(directory, filename);
@@ -363,7 +373,9 @@ namespace Ryujinx.Ava
                         }
                         catch (Exception ex)
                         {
-                            Logger.Error?.Print(LogClass.Application, $"Failed to create directory at path {directory}. Error : {ex.GetType().Name}", "Screenshot");
+                            Logger.Error?.Print(LogClass.Application,
+                                $"Failed to create directory at path {directory}. Error : {ex.GetType().Name}",
+                                "Screenshot");
 
                             return;
                         }
@@ -394,7 +406,9 @@ namespace Ryujinx.Ava
             }
             else
             {
-                Logger.Error?.Print(LogClass.Application, $"Screenshot is empty. Size : {e.Data.Length} bytes. Resolution : {e.Width}x{e.Height}", "Screenshot");
+                Logger.Error?.Print(LogClass.Application,
+                    $"Screenshot is empty. Size : {e.Data.Length} bytes. Resolution : {e.Width}x{e.Height}",
+                    "Screenshot");
             }
         }
 
@@ -415,14 +429,16 @@ namespace Ryujinx.Ava
 
             DisplaySleep.Prevent();
 
-            NpadManager.Initialize(Device, ConfigurationState.Instance.Hid.InputConfig, ConfigurationState.Instance.Hid.EnableKeyboard, ConfigurationState.Instance.Hid.EnableMouse);
+            NpadManager.Initialize(Device, ConfigurationState.Instance.Hid.InputConfig,
+                ConfigurationState.Instance.Hid.EnableKeyboard, ConfigurationState.Instance.Hid.EnableMouse);
             TouchScreenManager.Initialize(Device);
 
             _viewModel.IsGameRunning = true;
 
             Dispatcher.UIThread.InvokeAsync(() =>
             {
-                _viewModel.Title = TitleHelper.ActiveApplicationTitle(Device.Processes.ActiveApplication, Program.Version);
+                _viewModel.Title =
+                    TitleHelper.ActiveApplicationTitle(Device.Processes.ActiveApplication, Program.Version);
             });
 
             _viewModel.SetUiProgressHandlers(Device);
@@ -489,6 +505,21 @@ namespace Ryujinx.Ava
         private void UpdateMultiplayerModeState(object sender, ReactiveEventArgs<MultiplayerMode> e)
         {
             Device.Configuration.MultiplayerMode = e.NewValue;
+        }
+
+        private void UpdateLdnPassphraseState(object sender, ReactiveEventArgs<string> e)
+        {
+            Device.Configuration.MultiplayerLdnPassphrase = e.NewValue;
+        }
+
+        private void UpdateLdnServerState(object sender, ReactiveEventArgs<string> e)
+        {
+            Device.Configuration.MultiplayerLdnServer = e.NewValue;
+        }
+
+        private void UpdateDisableP2pState(object sender, ReactiveEventArgs<bool> e)
+        {
+            Device.Configuration.MultiplayerDisableP2p = e.NewValue;
         }
 
         public void ToggleVSync()
@@ -607,14 +638,16 @@ namespace Ryujinx.Ava
             if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime)
             {
                 if (!SetupValidator.CanStartApplication(ContentManager, ApplicationPath, out UserError userError))
-                { 
-                    if (SetupValidator.CanFixStartApplication(ContentManager, ApplicationPath, userError, out firmwareVersion))
+                {
+                    if (SetupValidator.CanFixStartApplication(ContentManager, ApplicationPath, userError,
+                            out firmwareVersion))
                     {
                         if (userError is UserError.NoFirmware)
                         {
                             UserResult result = await ContentDialogHelper.CreateConfirmationDialog(
-                                LocaleManager.Instance[LocaleKeys.DialogFirmwareNoFirmwareInstalledMessage], 
-                                LocaleManager.Instance.UpdateAndGetDynamicValue(LocaleKeys.DialogFirmwareInstallEmbeddedMessage, firmwareVersion.VersionString),
+                                LocaleManager.Instance[LocaleKeys.DialogFirmwareNoFirmwareInstalledMessage],
+                                LocaleManager.Instance.UpdateAndGetDynamicValue(
+                                    LocaleKeys.DialogFirmwareInstallEmbeddedMessage, firmwareVersion.VersionString),
                                 LocaleManager.Instance[LocaleKeys.InputDialogYes],
                                 LocaleManager.Instance[LocaleKeys.InputDialogNo],
                                 string.Empty);
@@ -644,8 +677,11 @@ namespace Ryujinx.Ava
                             _viewModel.RefreshFirmwareStatus();
 
                             await ContentDialogHelper.CreateInfoDialog(
-                                LocaleManager.Instance.UpdateAndGetDynamicValue(LocaleKeys.DialogFirmwareInstalledMessage, firmwareVersion.VersionString),
-                                LocaleManager.Instance.UpdateAndGetDynamicValue(LocaleKeys.DialogFirmwareInstallEmbeddedSuccessMessage, firmwareVersion.VersionString),
+                                LocaleManager.Instance.UpdateAndGetDynamicValue(
+                                    LocaleKeys.DialogFirmwareInstalledMessage, firmwareVersion.VersionString),
+                                LocaleManager.Instance.UpdateAndGetDynamicValue(
+                                    LocaleKeys.DialogFirmwareInstallEmbeddedSuccessMessage,
+                                    firmwareVersion.VersionString),
                                 LocaleManager.Instance[LocaleKeys.InputDialogOk],
                                 string.Empty,
                                 LocaleManager.Instance[LocaleKeys.RyujinxInfo]);
@@ -765,7 +801,8 @@ namespace Ryujinx.Ava
                             }
                             catch (ArgumentOutOfRangeException)
                             {
-                                Logger.Error?.Print(LogClass.Application, "The specified file is not supported by Ryujinx.");
+                                Logger.Error?.Print(LogClass.Application,
+                                    "The specified file is not supported by Ryujinx.");
 
                                 Device.Dispose();
 
@@ -785,7 +822,8 @@ namespace Ryujinx.Ava
                 return false;
             }
 
-            ApplicationMetadata appMeta = ApplicationLibrary.LoadAndSaveMetaData(Device.Processes.ActiveApplication.ProgramIdText,
+            ApplicationMetadata appMeta = ApplicationLibrary.LoadAndSaveMetaData(
+                Device.Processes.ActiveApplication.ProgramIdText,
                 appMetadata => appMetadata.UpdatePreGame()
             );
 
@@ -808,7 +846,8 @@ namespace Ryujinx.Ava
             Device?.System.TogglePauseEmulation(true);
 
             _viewModel.IsPaused = true;
-            _viewModel.Title = TitleHelper.ActiveApplicationTitle(Device?.Processes.ActiveApplication, Program.Version, LocaleManager.Instance[LocaleKeys.Paused]);
+            _viewModel.Title = TitleHelper.ActiveApplicationTitle(Device?.Processes.ActiveApplication, Program.Version,
+                LocaleManager.Instance[LocaleKeys.Paused]);
             Logger.Info?.Print(LogClass.Emulation, "Emulation was paused");
         }
 
@@ -827,7 +866,8 @@ namespace Ryujinx.Ava
 
             BackendThreading threadingMode = ConfigurationState.Instance.Graphics.BackendThreading;
 
-            var isGALThreaded = threadingMode == BackendThreading.On || (threadingMode == BackendThreading.Auto && renderer.PreferThreading);
+            var isGALThreaded = threadingMode == BackendThreading.On ||
+                                (threadingMode == BackendThreading.Auto && renderer.PreferThreading);
             if (isGALThreaded)
             {
                 renderer = new ThreadedRenderer(renderer);
@@ -839,44 +879,45 @@ namespace Ryujinx.Ava
             var memoryConfiguration = ConfigurationState.Instance.System.DramSize.Value;
 
             Device = new HLE.Switch(new HLEConfiguration(
-                VirtualFileSystem,
-                _viewModel.LibHacHorizonManager,
-                ContentManager,
-                _accountManager,
-                _userChannelPersistence,
-                renderer,
-                InitializeAudio(),
-                memoryConfiguration,
-                _viewModel.UiHandler,
-                (SystemLanguage)ConfigurationState.Instance.System.Language.Value,
-                (RegionCode)ConfigurationState.Instance.System.Region.Value,
-                ConfigurationState.Instance.Graphics.EnableVsync,
-                ConfigurationState.Instance.System.EnableDockedMode,
-                ConfigurationState.Instance.System.EnablePtc,
-                ConfigurationState.Instance.System.EnableInternetAccess,
-                ConfigurationState.Instance.System.EnableFsIntegrityChecks ? IntegrityCheckLevel.ErrorOnInvalid : IntegrityCheckLevel.None,
-                ConfigurationState.Instance.System.FsGlobalAccessLogMode,
-                ConfigurationState.Instance.System.SystemTimeOffset,
-                ConfigurationState.Instance.System.TimeZone,
-                ConfigurationState.Instance.System.MemoryManagerMode,
-                ConfigurationState.Instance.System.IgnoreMissingServices,
-                ConfigurationState.Instance.Graphics.AspectRatio,
-                ConfigurationState.Instance.System.AudioVolume,
-                ConfigurationState.Instance.System.UseHypervisor,
-                ConfigurationState.Instance.Multiplayer.LanInterfaceId,
-                ConfigurationState.Instance.Multiplayer.Mode
-                )
-            );
+                    VirtualFileSystem,
+                    _viewModel.LibHacHorizonManager,
+                    ContentManager,
+                    _accountManager,
+                    _userChannelPersistence,
+                    renderer,
+                    InitializeAudio(),
+                    memoryConfiguration,
+                    _viewModel.UiHandler,
+                    (SystemLanguage)ConfigurationState.Instance.System.Language.Value,
+                    (RegionCode)ConfigurationState.Instance.System.Region.Value,
+                    ConfigurationState.Instance.Graphics.EnableVsync,
+                    ConfigurationState.Instance.System.EnableDockedMode,
+                    ConfigurationState.Instance.System.EnablePtc,
+                    ConfigurationState.Instance.System.EnableInternetAccess,
+                    ConfigurationState.Instance.System.EnableFsIntegrityChecks
+                        ? IntegrityCheckLevel.ErrorOnInvalid
+                        : IntegrityCheckLevel.None,
+                    ConfigurationState.Instance.System.FsGlobalAccessLogMode,
+                    ConfigurationState.Instance.System.SystemTimeOffset,
+                    ConfigurationState.Instance.System.TimeZone,
+                    ConfigurationState.Instance.System.MemoryManagerMode,
+                    ConfigurationState.Instance.System.IgnoreMissingServices,
+                    ConfigurationState.Instance.Graphics.AspectRatio,
+                    ConfigurationState.Instance.System.AudioVolume,
+                    ConfigurationState.Instance.System.UseHypervisor,
+                    ConfigurationState.Instance.Multiplayer.LanInterfaceId.Value,
+                    ConfigurationState.Instance.Multiplayer.Mode,
+                    ConfigurationState.Instance.Multiplayer.DisableP2p,
+                    ConfigurationState.Instance.Multiplayer.LdnPassphrase,
+                    ConfigurationState.Instance.Multiplayer.LdnServer)
+                );
         }
 
         private static IHardwareDeviceDriver InitializeAudio()
         {
             var availableBackends = new List<AudioBackend>
             {
-                AudioBackend.SDL2,
-                AudioBackend.SoundIo,
-                AudioBackend.OpenAl,
-                AudioBackend.Dummy,
+                AudioBackend.SDL2, AudioBackend.SoundIo, AudioBackend.OpenAl, AudioBackend.Dummy,
             };
 
             AudioBackend preferredBackend = ConfigurationState.Instance.System.AudioBackend.Value;
@@ -891,7 +932,8 @@ namespace Ryujinx.Ava
                 }
             }
 
-            static IHardwareDeviceDriver InitializeAudioBackend<T>(AudioBackend backend, AudioBackend nextBackend) where T : IHardwareDeviceDriver, new()
+            static IHardwareDeviceDriver InitializeAudioBackend<T>(AudioBackend backend, AudioBackend nextBackend)
+                where T : IHardwareDeviceDriver, new()
             {
                 if (T.IsSupported)
                 {
@@ -908,13 +950,17 @@ namespace Ryujinx.Ava
             for (int i = 0; i < availableBackends.Count; i++)
             {
                 AudioBackend currentBackend = availableBackends[i];
-                AudioBackend nextBackend = i + 1 < availableBackends.Count ? availableBackends[i + 1] : AudioBackend.Dummy;
+                AudioBackend nextBackend =
+                    i + 1 < availableBackends.Count ? availableBackends[i + 1] : AudioBackend.Dummy;
 
                 deviceDriver = currentBackend switch
                 {
-                    AudioBackend.SDL2 => InitializeAudioBackend<SDL2HardwareDeviceDriver>(AudioBackend.SDL2, nextBackend),
-                    AudioBackend.SoundIo => InitializeAudioBackend<SoundIoHardwareDeviceDriver>(AudioBackend.SoundIo, nextBackend),
-                    AudioBackend.OpenAl => InitializeAudioBackend<OpenALHardwareDeviceDriver>(AudioBackend.OpenAl, nextBackend),
+                    AudioBackend.SDL2 => InitializeAudioBackend<SDL2HardwareDeviceDriver>(AudioBackend.SDL2,
+                        nextBackend),
+                    AudioBackend.SoundIo => InitializeAudioBackend<SoundIoHardwareDeviceDriver>(AudioBackend.SoundIo,
+                        nextBackend),
+                    AudioBackend.OpenAl => InitializeAudioBackend<OpenALHardwareDeviceDriver>(AudioBackend.OpenAl,
+                        nextBackend),
                     _ => new DummyHardwareDeviceDriver(),
                 };
 
@@ -970,10 +1016,13 @@ namespace Ryujinx.Ava
 
             Device.Gpu.Renderer.Initialize(_glLogLevel);
 
-            _renderer?.Window?.SetAntiAliasing((Graphics.GAL.AntiAliasing)ConfigurationState.Instance.Graphics.AntiAliasing.Value);
-            _renderer?.Window?.SetScalingFilter((Graphics.GAL.ScalingFilter)ConfigurationState.Instance.Graphics.ScalingFilter.Value);
+            _renderer?.Window?.SetAntiAliasing(
+                (Graphics.GAL.AntiAliasing)ConfigurationState.Instance.Graphics.AntiAliasing.Value);
+            _renderer?.Window?.SetScalingFilter(
+                (Graphics.GAL.ScalingFilter)ConfigurationState.Instance.Graphics.ScalingFilter.Value);
             _renderer?.Window?.SetScalingFilterLevel(ConfigurationState.Instance.Graphics.ScalingFilterLevel.Value);
-            _renderer?.Window?.SetColorSpacePassthrough(ConfigurationState.Instance.Graphics.EnableColorSpacePassthrough.Value);
+            _renderer?.Window?.SetColorSpacePassthrough(ConfigurationState.Instance.Graphics.EnableColorSpacePassthrough
+                .Value);
 
             Width = (int)RendererHost.Bounds.Width;
             Height = (int)RendererHost.Bounds.Height;
@@ -1047,10 +1096,12 @@ namespace Ryujinx.Ava
         public void UpdateStatus()
         {
             // Run a status update only when a frame is to be drawn. This prevents from updating the ui and wasting a render when no frame is queued.
-            string dockedMode = ConfigurationState.Instance.System.EnableDockedMode ? LocaleManager.Instance[LocaleKeys.Docked] : LocaleManager.Instance[LocaleKeys.Handheld];
+            string dockedMode = ConfigurationState.Instance.System.EnableDockedMode
+                ? LocaleManager.Instance[LocaleKeys.Docked]
+                : LocaleManager.Instance[LocaleKeys.Handheld];
 
             UpdateShaderCount();
-            
+
             if (GraphicsConfig.ResScale != 1)
             {
                 dockedMode += $" ({GraphicsConfig.ResScale}x)";
@@ -1061,7 +1112,8 @@ namespace Ryujinx.Ava
                 LocaleManager.Instance[LocaleKeys.VolumeShort] + $": {(int)(Device.GetVolume() * 100)}%",
                 dockedMode,
                 ConfigurationState.Instance.Graphics.AspectRatio.Value.ToText(),
-                LocaleManager.Instance[LocaleKeys.Game] + $": {Device.Statistics.GetGameFrameRate():00.00} FPS ({Device.Statistics.GetGameFrameTime():00.00} ms)",
+                LocaleManager.Instance[LocaleKeys.Game] +
+                $": {Device.Statistics.GetGameFrameRate():00.00} FPS ({Device.Statistics.GetGameFrameTime():00.00} ms)",
                 $"FIFO: {Device.Statistics.GetFifoPercent():00.00} %",
                 _displayCount));
         }
@@ -1129,8 +1181,9 @@ namespace Ryujinx.Ava
                     else
                     {
                         isCursorVisible = ConfigurationState.Instance.HideCursor.Value == HideCursorMode.Never ||
-                            (ConfigurationState.Instance.HideCursor.Value == HideCursorMode.OnIdle &&
-                            Stopwatch.GetTimestamp() - _lastCursorMoveTime < CursorHideIdleTime * Stopwatch.Frequency);
+                                          (ConfigurationState.Instance.HideCursor.Value == HideCursorMode.OnIdle &&
+                                           Stopwatch.GetTimestamp() - _lastCursorMoveTime <
+                                           CursorHideIdleTime * Stopwatch.Frequency);
                     }
                 }
 
@@ -1148,7 +1201,8 @@ namespace Ryujinx.Ava
 
                 Dispatcher.UIThread.Post(() =>
                 {
-                    if (_keyboardInterface.GetKeyboardStateSnapshot().IsPressed(Key.Delete) && _viewModel.WindowState is not WindowState.FullScreen)
+                    if (_keyboardInterface.GetKeyboardStateSnapshot().IsPressed(Key.Delete) &&
+                        _viewModel.WindowState is not WindowState.FullScreen)
                     {
                         Device.Processes.ActiveApplication.DiskCacheLoadState?.Cancel();
                     }
@@ -1178,6 +1232,7 @@ namespace Ryujinx.Ava
                             {
                                 Pause();
                             }
+
                             break;
                         case KeyboardHotkeyState.ToggleMute:
                             if (Device.IsAudioMuted())
@@ -1197,7 +1252,7 @@ namespace Ryujinx.Ava
                             break;
                         case KeyboardHotkeyState.ResScaleDown:
                             GraphicsConfig.ResScale =
-                            (MaxResolutionScale + GraphicsConfig.ResScale - 2) % MaxResolutionScale + 1;
+                                (MaxResolutionScale + GraphicsConfig.ResScale - 2) % MaxResolutionScale + 1;
                             break;
                         case KeyboardHotkeyState.VolumeUp:
                             _newVolume = MathF.Round((Device.GetVolume() + VolumeDelta), 2);
@@ -1231,7 +1286,9 @@ namespace Ryujinx.Ava
 
             if (_viewModel.IsActive && !ConfigurationState.Instance.Hid.EnableMouse.Value)
             {
-                hasTouch = TouchScreenManager.Update(true, (_inputManager.MouseDriver as AvaloniaMouseDriver).IsButtonPressed(MouseButton.Button1), ConfigurationState.Instance.Graphics.AspectRatio.Value.ToFloat());
+                hasTouch = TouchScreenManager.Update(true,
+                    (_inputManager.MouseDriver as AvaloniaMouseDriver).IsButtonPressed(MouseButton.Button1),
+                    ConfigurationState.Instance.Graphics.AspectRatio.Value.ToFloat());
             }
 
             if (!hasTouch)

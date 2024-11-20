@@ -24,7 +24,7 @@ namespace Ryujinx.Ava.UI.Applet
         public AvaloniaDynamicTextInputHandler(MainWindow parent)
         {
             _parent = parent;
-            
+
             if (_parent.InputManager.KeyboardDriver is AvaloniaKeyboardDriver avaloniaKeyboardDriver)
             {
                 avaloniaKeyboardDriver.KeyPressed += AvaloniaDynamicTextInputHandler_KeyPressed;
@@ -37,19 +37,23 @@ namespace Ryujinx.Ava.UI.Applet
             Dispatcher.UIThread.Post(() =>
             {
                 _textChangedSubscription = _hiddenTextBox.GetObservable(TextBox.TextProperty).Subscribe(TextChanged);
-                _selectionStartChangedSubscription = _hiddenTextBox.GetObservable(TextBox.SelectionStartProperty).Subscribe(SelectionChanged);
-                _selectionEndtextChangedSubscription = _hiddenTextBox.GetObservable(TextBox.SelectionEndProperty).Subscribe(SelectionChanged);
+                _selectionStartChangedSubscription = _hiddenTextBox.GetObservable(TextBox.SelectionStartProperty)
+                    .Subscribe(SelectionChanged);
+                _selectionEndtextChangedSubscription = _hiddenTextBox.GetObservable(TextBox.SelectionEndProperty)
+                    .Subscribe(SelectionChanged);
             });
         }
 
         private void TextChanged(string text)
         {
-            TextChangedEvent?.Invoke(text ?? string.Empty, _hiddenTextBox.SelectionStart, _hiddenTextBox.SelectionEnd, false);
+            TextChangedEvent?.Invoke(text ?? string.Empty, _hiddenTextBox.SelectionStart, _hiddenTextBox.SelectionEnd,
+                false);
         }
 
         private void SelectionChanged(int _)
         {
-            TextChangedEvent?.Invoke(_hiddenTextBox.Text ?? string.Empty, _hiddenTextBox.SelectionStart, _hiddenTextBox.SelectionEnd, false);
+            TextChangedEvent?.Invoke(_hiddenTextBox.Text ?? string.Empty, _hiddenTextBox.SelectionStart,
+                _hiddenTextBox.SelectionEnd, false);
         }
 
         private void AvaloniaDynamicTextInputHandler_TextInput(object sender, string text)
@@ -121,7 +125,7 @@ namespace Ryujinx.Ava.UI.Applet
                 avaloniaKeyboardDriver.KeyRelease -= AvaloniaDynamicTextInputHandler_KeyRelease;
                 avaloniaKeyboardDriver.TextInput -= AvaloniaDynamicTextInputHandler_TextInput;
             }
-            
+
             _textChangedSubscription?.Dispose();
             _selectionStartChangedSubscription?.Dispose();
             _selectionEndtextChangedSubscription?.Dispose();

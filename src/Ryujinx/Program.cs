@@ -38,17 +38,20 @@ namespace Ryujinx.Ava
         public static bool UseHardwareAcceleration { get; private set; }
 
         [LibraryImport("user32.dll", SetLastError = true)]
-        public static partial int MessageBoxA(nint hWnd, [MarshalAs(UnmanagedType.LPStr)] string text, [MarshalAs(UnmanagedType.LPStr)] string caption, uint type);
+        public static partial int MessageBoxA(nint hWnd, [MarshalAs(UnmanagedType.LPStr)] string text,
+            [MarshalAs(UnmanagedType.LPStr)] string caption, uint type);
 
         private const uint MbIconwarning = 0x30;
 
         public static int Main(string[] args)
         {
             Version = ReleaseInformation.Version;
-            
+
             if (OperatingSystem.IsWindows() && !OperatingSystem.IsWindowsVersionAtLeast(10, 0, 17134))
             {
-                _ = MessageBoxA(nint.Zero, "You are running an outdated version of Windows.\n\nRyujinx supports Windows 10 version 1803 and newer.\n", $"Ryujinx {Version}", MbIconwarning);
+                _ = MessageBoxA(nint.Zero,
+                    "You are running an outdated version of Windows.\n\nRyujinx supports Windows 10 version 1803 and newer.\n",
+                    $"Ryujinx {Version}", MbIconwarning);
             }
 
             PreviewerDetached = true;
@@ -103,7 +106,7 @@ namespace Ryujinx.Ava
             Console.Title = $"{App.FullAppName} Console {Version}";
 
             // Hook unhandled exception and process exit events.
-            AppDomain.CurrentDomain.UnhandledException += (sender, e) 
+            AppDomain.CurrentDomain.UnhandledException += (sender, e)
                 => ProcessUnhandledException(sender, e.ExceptionObject as Exception, e.IsTerminating);
             AppDomain.CurrentDomain.ProcessExit += (_, _) => Exit();
 
@@ -123,7 +126,8 @@ namespace Ryujinx.Ava
             DiscordIntegrationModule.Initialize();
 
             // Initialize SDL2 driver
-            SDL2Driver.MainThreadDispatcher = action => Dispatcher.UIThread.InvokeAsync(action, DispatcherPriority.Input);
+            SDL2Driver.MainThreadDispatcher =
+                action => Dispatcher.UIThread.InvokeAsync(action, DispatcherPriority.Input);
 
             ReloadConfig();
 
@@ -133,12 +137,14 @@ namespace Ryujinx.Ava
             PrintSystemInfo();
 
             // Enable OGL multithreading on the driver, and some other flags.
-            DriverUtilities.InitDriverConfig(ConfigurationState.Instance.Graphics.BackendThreading == BackendThreading.Off);
+            DriverUtilities.InitDriverConfig(ConfigurationState.Instance.Graphics.BackendThreading ==
+                                             BackendThreading.Off);
 
             // Check if keys exists.
             if (!File.Exists(Path.Combine(AppDataManager.KeysDirPath, "prod.keys")))
             {
-                if (!(AppDataManager.Mode == AppDataManager.LaunchMode.UserProfile && File.Exists(Path.Combine(AppDataManager.KeysDirPathUser, "prod.keys"))))
+                if (!(AppDataManager.Mode == AppDataManager.LaunchMode.UserProfile &&
+                      File.Exists(Path.Combine(AppDataManager.KeysDirPathUser, "prod.keys"))))
                 {
                     MainWindow.ShowKeyErrorOnLoad = true;
                 }
@@ -146,13 +152,15 @@ namespace Ryujinx.Ava
 
             if (CommandLineState.LaunchPathArg != null)
             {
-                MainWindow.DeferLoadApplication(CommandLineState.LaunchPathArg, CommandLineState.LaunchApplicationId, CommandLineState.StartFullscreenArg);
+                MainWindow.DeferLoadApplication(CommandLineState.LaunchPathArg, CommandLineState.LaunchApplicationId,
+                    CommandLineState.StartFullscreenArg);
             }
         }
 
         public static void ReloadConfig()
         {
-            string localConfigurationPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ReleaseInformation.ConfigName);
+            string localConfigurationPath =
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ReleaseInformation.ConfigName);
             string appDataConfigurationPath = Path.Combine(AppDataManager.BaseDirPath, ReleaseInformation.ConfigName);
 
             // Now load the configuration as the other subsystems are now registered
@@ -169,7 +177,8 @@ namespace Ryujinx.Ava
             {
                 // No configuration, we load the default values and save it to disk
                 ConfigurationPath = appDataConfigurationPath;
-                Logger.Notice.Print(LogClass.Application, $"No configuration file found. Saving default configuration to: {ConfigurationPath}");
+                Logger.Notice.Print(LogClass.Application,
+                    $"No configuration file found. Saving default configuration to: {ConfigurationPath}");
 
                 ConfigurationState.Instance.LoadDefault();
                 ConfigurationState.Instance.ToFileFormat().SaveConfig(ConfigurationPath);
@@ -178,13 +187,15 @@ namespace Ryujinx.Ava
             {
                 Logger.Notice.Print(LogClass.Application, $"Loading configuration from: {ConfigurationPath}");
 
-                if (ConfigurationFileFormat.TryLoad(ConfigurationPath, out ConfigurationFileFormat configurationFileFormat))
+                if (ConfigurationFileFormat.TryLoad(ConfigurationPath,
+                        out ConfigurationFileFormat configurationFileFormat))
                 {
                     ConfigurationState.Instance.Load(configurationFileFormat, ConfigurationPath);
                 }
                 else
                 {
-                    Logger.Warning?.PrintMsg(LogClass.Application, $"Failed to load config! Loading the default config instead.\nFailed config location: {ConfigurationPath}");
+                    Logger.Warning?.PrintMsg(LogClass.Application,
+                        $"Failed to load config! Loading the default config instead.\nFailed config location: {ConfigurationPath}");
 
                     ConfigurationState.Instance.LoadDefault();
                 }
@@ -194,12 +205,13 @@ namespace Ryujinx.Ava
 
             // Check if graphics backend was overridden
             if (CommandLineState.OverrideGraphicsBackend is not null)
-                ConfigurationState.Instance.Graphics.GraphicsBackend.Value = CommandLineState.OverrideGraphicsBackend.ToLower() switch
-                {
-                    "opengl" => GraphicsBackend.OpenGl,
-                    "vulkan" => GraphicsBackend.Vulkan,
-                    _ => ConfigurationState.Instance.Graphics.GraphicsBackend
-                };
+                ConfigurationState.Instance.Graphics.GraphicsBackend.Value =
+                    CommandLineState.OverrideGraphicsBackend.ToLower() switch
+                    {
+                        "opengl" => GraphicsBackend.OpenGl,
+                        "vulkan" => GraphicsBackend.Vulkan,
+                        _ => ConfigurationState.Instance.Graphics.GraphicsBackend
+                    };
 
             // Check if docked mode was overriden.
             if (CommandLineState.OverrideDockedMode.HasValue)
@@ -245,13 +257,13 @@ namespace Ryujinx.Ava
         {
             Logger.Log log = Logger.Error ?? Logger.Notice;
             string message = $"Unhandled exception caught: {ex}";
-            
+
             // ReSharper disable once ConstantConditionalAccessQualifier
-            if (sender?.GetType()?.AsPrettyString() is {} senderName)
+            if (sender?.GetType()?.AsPrettyString() is { } senderName)
                 log.Print(LogClass.Application, message, senderName);
             else
                 log.PrintMsg(LogClass.Application, message);
-            
+
             if (isTerminating)
                 Exit();
         }

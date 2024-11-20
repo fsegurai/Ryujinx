@@ -31,7 +31,7 @@ namespace Ryujinx.Ava.UI.Applet
         public bool DisplayMessageDialog(ControllerAppletUIArgs args)
         {
             ManualResetEvent dialogCloseEvent = new(false);
-            
+
             bool okPressed = false;
 
             if (ConfigurationState.Instance.IgnoreApplet)
@@ -68,31 +68,32 @@ namespace Ryujinx.Ava.UI.Applet
                     bool opened = false;
 
                     UserResult response = await ContentDialogHelper.ShowDeferredContentDialog(_parent,
-                       title,
-                       message,
-                       string.Empty,
-                       LocaleManager.Instance[LocaleKeys.DialogOpenSettingsWindowLabel],
-                       string.Empty,
-                       LocaleManager.Instance[LocaleKeys.SettingsButtonClose],
-                       (int)Symbol.Important,
-                       deferEvent,
-                       async window =>
-                       {
-                           if (opened)
-                           {
-                               return;
-                           }
+                        title,
+                        message,
+                        string.Empty,
+                        LocaleManager.Instance[LocaleKeys.DialogOpenSettingsWindowLabel],
+                        string.Empty,
+                        LocaleManager.Instance[LocaleKeys.SettingsButtonClose],
+                        (int)Symbol.Important,
+                        deferEvent,
+                        async window =>
+                        {
+                            if (opened)
+                            {
+                                return;
+                            }
 
-                           opened = true;
+                            opened = true;
 
-                           _parent.SettingsWindow = new SettingsWindow(_parent.VirtualFileSystem, _parent.ContentManager);
+                            _parent.SettingsWindow =
+                                new SettingsWindow(_parent.VirtualFileSystem, _parent.ContentManager);
 
-                           await _parent.SettingsWindow.ShowDialog(window);
+                            await _parent.SettingsWindow.ShowDialog(window);
 
-                           _parent.SettingsWindow = null;
+                            _parent.SettingsWindow = null;
 
-                           opened = false;
-                       });
+                            opened = false;
+                        });
 
                     if (response == UserResult.Ok)
                     {
@@ -103,7 +104,9 @@ namespace Ryujinx.Ava.UI.Applet
                 }
                 catch (Exception ex)
                 {
-                    await ContentDialogHelper.CreateErrorDialog(LocaleManager.Instance.UpdateAndGetDynamicValue(LocaleKeys.DialogMessageDialogErrorExceptionMessage, ex));
+                    await ContentDialogHelper.CreateErrorDialog(
+                        LocaleManager.Instance.UpdateAndGetDynamicValue(
+                            LocaleKeys.DialogMessageDialogErrorExceptionMessage, ex));
 
                     dialogCloseEvent.Set();
                 }
@@ -127,7 +130,9 @@ namespace Ryujinx.Ava.UI.Applet
                 try
                 {
                     _parent.ViewModel.AppHost.NpadManager.BlockInputUpdates();
-                    var response = await SwkbdAppletDialog.ShowInputDialog(LocaleManager.Instance[LocaleKeys.SoftwareKeyboard], args);
+                    var response =
+                        await SwkbdAppletDialog.ShowInputDialog(LocaleManager.Instance[LocaleKeys.SoftwareKeyboard],
+                            args);
 
                     if (response.Result == UserResult.Ok)
                     {
@@ -139,7 +144,9 @@ namespace Ryujinx.Ava.UI.Applet
                 {
                     error = true;
 
-                    await ContentDialogHelper.CreateErrorDialog(LocaleManager.Instance.UpdateAndGetDynamicValue(LocaleKeys.DialogSoftwareKeyboardErrorExceptionMessage, ex));
+                    await ContentDialogHelper.CreateErrorDialog(
+                        LocaleManager.Instance.UpdateAndGetDynamicValue(
+                            LocaleKeys.DialogSoftwareKeyboardErrorExceptionMessage, ex));
                 }
                 finally
                 {
@@ -173,9 +180,7 @@ namespace Ryujinx.Ava.UI.Applet
                 {
                     ErrorAppletWindow msgDialog = new(_parent, buttons, message)
                     {
-                        Title = title,
-                        WindowStartupLocation = WindowStartupLocation.CenterScreen,
-                        Width = 400
+                        Title = title, WindowStartupLocation = WindowStartupLocation.CenterScreen, Width = 400
                     };
 
                     object response = await msgDialog.Run();
@@ -193,7 +198,9 @@ namespace Ryujinx.Ava.UI.Applet
                 {
                     dialogCloseEvent.Set();
 
-                    await ContentDialogHelper.CreateErrorDialog(LocaleManager.Instance.UpdateAndGetDynamicValue(LocaleKeys.DialogErrorAppletErrorExceptionMessage, ex));
+                    await ContentDialogHelper.CreateErrorDialog(
+                        LocaleManager.Instance.UpdateAndGetDynamicValue(
+                            LocaleKeys.DialogErrorAppletErrorExceptionMessage, ex));
                 }
             });
 

@@ -16,6 +16,7 @@ namespace Ryujinx.UI.Common.Helper
         public static string LaunchPathArg { get; private set; }
         public static string LaunchApplicationId { get; private set; }
         public static bool StartFullscreenArg { get; private set; }
+        public static bool HideAvailableUpdates { get; private set; }
 
         public static void ParseArguments(string[] args)
         {
@@ -42,6 +43,7 @@ namespace Ryujinx.UI.Common.Helper
                         arguments.Add(arg);
                         arguments.Add(args[i]);
                         break;
+                    
                     case "-p":
                     case "--profile":
                         if (i + 1 >= args.Length)
@@ -56,12 +58,14 @@ namespace Ryujinx.UI.Common.Helper
                         arguments.Add(arg);
                         arguments.Add(args[i]);
                         break;
+                    
                     case "-f":
                     case "--fullscreen":
                         StartFullscreenArg = true;
 
                         arguments.Add(arg);
                         break;
+                    
                     case "-g":
                     case "--graphics-backend":
                         if (i + 1 >= args.Length)
@@ -73,16 +77,20 @@ namespace Ryujinx.UI.Common.Helper
 
                         OverrideGraphicsBackend = args[++i];
                         break;
+                    
                     case "-i":
                     case "--application-id":
                         LaunchApplicationId = args[++i];
                         break;
+                    
                     case "--docked-mode":
                         OverrideDockedMode = true;
                         break;
+                    
                     case "--handheld-mode":
                         OverrideDockedMode = false;
                         break;
+                    
                     case "--hide-cursor":
                         if (i + 1 >= args.Length)
                         {
@@ -93,6 +101,11 @@ namespace Ryujinx.UI.Common.Helper
 
                         OverrideHideCursor = args[++i];
                         break;
+
+                    case "--hide-updates":
+                        HideAvailableUpdates = true;
+                        break;
+
                     case "--software-gui":
                         OverrideHardwareAcceleration = false;
                         break;

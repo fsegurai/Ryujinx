@@ -115,7 +115,9 @@ namespace Ryujinx.Input.SDL2
                 {
                     lock (_lock)
                     {
-                        _gamepadsIds.Insert(joystickDeviceId, id);
+                        if (joystickDeviceId <= _gamepadsIds.FindLastIndex(_ => true))
+                            _gamepadsIds.Insert(joystickDeviceId, id);
+                        else _gamepadsIds.Add(id);
                     }
 
                     OnGamepadConnected?.Invoke(id);

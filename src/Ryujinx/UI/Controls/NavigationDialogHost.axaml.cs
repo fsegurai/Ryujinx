@@ -48,7 +48,7 @@ namespace Ryujinx.Ava.UI.Controls
 
             if (contentManager.GetCurrentFirmwareVersion() != null)
                 Task.Run(() => UserFirmwareAvatarSelectorViewModel.PreloadAvatars(contentManager, virtualFileSystem));
-            
+
             InitializeComponent();
         }
 
@@ -60,16 +60,17 @@ namespace Ryujinx.Ava.UI.Controls
             LoadProfiles();
         }
 
-        public void Navigate(Type sourcePageType, object parameter) 
+        public void Navigate(Type sourcePageType, object parameter)
             => ContentFrame.Navigate(sourcePageType, parameter);
 
         public static async Task Show(
-            AccountManager ownerAccountManager, 
+            AccountManager ownerAccountManager,
             ContentManager ownerContentManager,
-            VirtualFileSystem ownerVirtualFileSystem, 
+            VirtualFileSystem ownerVirtualFileSystem,
             HorizonClient ownerHorizonClient)
         {
-            var content = new NavigationDialogHost(ownerAccountManager, ownerContentManager, ownerVirtualFileSystem, ownerHorizonClient);
+            var content = new NavigationDialogHost(ownerAccountManager, ownerContentManager, ownerVirtualFileSystem,
+                ownerHorizonClient);
             ContentDialog contentDialog = new()
             {
                 Title = LocaleManager.Instance[LocaleKeys.UserProfileWindowTitle],
@@ -106,11 +107,13 @@ namespace Ryujinx.Ava.UI.Controls
                 .OrderBy(x => x.Name)
                 .ForEach(profile => ViewModel.Profiles.Add(new UserProfile(profile, this)));
 
-            var saveDataFilter = SaveDataFilter.Make(programId: default, saveType: SaveDataType.Account, default, saveDataId: default, index: default);
+            var saveDataFilter = SaveDataFilter.Make(programId: default, saveType: SaveDataType.Account, default,
+                saveDataId: default, index: default);
 
             using var saveDataIterator = new UniqueRef<SaveDataIterator>();
 
-            HorizonClient.Fs.OpenSaveDataIterator(ref saveDataIterator.Ref, SaveDataSpaceId.User, in saveDataFilter).ThrowIfFailure();
+            HorizonClient.Fs.OpenSaveDataIterator(ref saveDataIterator.Ref, SaveDataSpaceId.User, in saveDataFilter)
+                .ThrowIfFailure();
 
             Span<SaveDataInfo> saveDataInfo = stackalloc SaveDataInfo[10];
 
@@ -138,7 +141,8 @@ namespace Ryujinx.Ava.UI.Controls
 
             foreach (var account in lostAccounts)
             {
-                ViewModel.LostProfiles.Add(new UserProfile(new HLE.HOS.Services.Account.Acc.UserProfile(account, string.Empty, null), this));
+                ViewModel.LostProfiles.Add(
+                    new UserProfile(new HLE.HOS.Services.Account.Acc.UserProfile(account, string.Empty, null), this));
             }
 
             ViewModel.Profiles.Add(new BaseModel());
@@ -155,10 +159,10 @@ namespace Ryujinx.Ava.UI.Controls
 
                 if (profile == null)
                 {
-                    _ = Dispatcher.UIThread.InvokeAsync(async () 
+                    _ = Dispatcher.UIThread.InvokeAsync(async ()
                         => await ContentDialogHelper.CreateErrorDialog(
                             LocaleManager.Instance[LocaleKeys.DialogUserProfileDeletionWarningMessage]));
-                    
+
                     return;
                 }
 

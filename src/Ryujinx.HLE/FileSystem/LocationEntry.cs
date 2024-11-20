@@ -9,6 +9,8 @@ namespace Ryujinx.HLE.FileSystem
         public ulong TitleId { get; private set; }
         public NcaContentType ContentType { get; private set; }
 
+        public LocationEntry() : this(string.Empty, 0, 0, NcaContentType.Program) { }
+
         public LocationEntry(string contentPath, int flag, ulong titleId, NcaContentType contentType)
         {
             ContentPath = contentPath;

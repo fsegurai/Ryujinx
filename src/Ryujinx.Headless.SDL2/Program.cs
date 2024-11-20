@@ -59,7 +59,8 @@ namespace Ryujinx.Headless.SDL2
         private static bool _enableKeyboard;
         private static bool _enableMouse;
 
-        private static readonly InputConfigJsonSerializerContext _serializerContext = new(JsonHelper.GetDefaultSerializerOptions());
+        private static readonly InputConfigJsonSerializerContext _serializerContext =
+            new(JsonHelper.GetDefaultSerializerOptions());
 
         static void Main(string[] args)
         {
@@ -96,8 +97,8 @@ namespace Ryujinx.Headless.SDL2
             }
 
             Parser.Default.ParseArguments<Options>(args)
-            .WithParsed(Load)
-            .WithNotParsed(errors => errors.Output());
+                .WithParsed(Load)
+                .WithNotParsed(errors => errors.Output());
         }
 
         private static InputConfig HandlePlayerConfiguration(string inputProfileName, string inputId, PlayerIndex index)
@@ -106,7 +107,8 @@ namespace Ryujinx.Headless.SDL2
             {
                 if (index == PlayerIndex.Player1)
                 {
-                    Logger.Info?.Print(LogClass.Application, $"{index} not configured, defaulting to default keyboard.");
+                    Logger.Info?.Print(LogClass.Application,
+                        $"{index} not configured, defaulting to default keyboard.");
 
                     // Default to keyboard
                     inputId = "0";
@@ -164,7 +166,6 @@ namespace Ryujinx.Headless.SDL2
                             ButtonSl = Key.Unbound,
                             ButtonSr = Key.Unbound,
                         },
-
                         LeftJoyconStick = new JoyconConfigKeyboardStick<Key>
                         {
                             StickUp = Key.W,
@@ -173,7 +174,6 @@ namespace Ryujinx.Headless.SDL2
                             StickRight = Key.D,
                             StickButton = Key.F,
                         },
-
                         RightJoycon = new RightJoyconCommonConfig<Key>
                         {
                             ButtonA = Key.Z,
@@ -186,7 +186,6 @@ namespace Ryujinx.Headless.SDL2
                             ButtonSl = Key.Unbound,
                             ButtonSr = Key.Unbound,
                         },
-
                         RightJoyconStick = new JoyconConfigKeyboardStick<Key>
                         {
                             StickUp = Key.I,
@@ -224,7 +223,6 @@ namespace Ryujinx.Headless.SDL2
                             ButtonSl = ConfigGamepadInputId.Unbound,
                             ButtonSr = ConfigGamepadInputId.Unbound,
                         },
-
                         LeftJoyconStick = new JoyconConfigControllerStick<ConfigGamepadInputId, ConfigStickInputId>
                         {
                             Joystick = ConfigStickInputId.Left,
@@ -233,7 +231,6 @@ namespace Ryujinx.Headless.SDL2
                             InvertStickY = false,
                             Rotate90CW = false,
                         },
-
                         RightJoycon = new RightJoyconCommonConfig<ConfigGamepadInputId>
                         {
                             ButtonA = isNintendoStyle ? ConfigGamepadInputId.A : ConfigGamepadInputId.B,
@@ -246,7 +243,6 @@ namespace Ryujinx.Headless.SDL2
                             ButtonSl = ConfigGamepadInputId.Unbound,
                             ButtonSr = ConfigGamepadInputId.Unbound,
                         },
-
                         RightJoyconStick = new JoyconConfigControllerStick<ConfigGamepadInputId, ConfigStickInputId>
                         {
                             Joystick = ConfigStickInputId.Right,
@@ -255,7 +251,6 @@ namespace Ryujinx.Headless.SDL2
                             InvertStickY = false,
                             Rotate90CW = false,
                         },
-
                         Motion = new StandardMotionConfigController
                         {
                             MotionBackend = MotionInputBackendType.GamepadDriver,
@@ -265,9 +260,7 @@ namespace Ryujinx.Headless.SDL2
                         },
                         Rumble = new RumbleConfigController
                         {
-                            StrongRumble = 1f,
-                            WeakRumble = 1f,
-                            EnableRumble = false,
+                            StrongRumble = 1f, WeakRumble = 1f, EnableRumble = false,
                         },
                     };
                 }
@@ -289,7 +282,8 @@ namespace Ryujinx.Headless.SDL2
 
                 if (!File.Exists(path))
                 {
-                    Logger.Error?.Print(LogClass.Application, $"Input profile \"{inputProfileName}\" not found for \"{inputId}\"");
+                    Logger.Error?.Print(LogClass.Application,
+                        $"Input profile \"{inputProfileName}\" not found for \"{inputId}\"");
 
                     return null;
                 }
@@ -300,7 +294,8 @@ namespace Ryujinx.Headless.SDL2
                 }
                 catch (JsonException)
                 {
-                    Logger.Error?.Print(LogClass.Application, $"Input profile \"{inputProfileName}\" parsing failed for \"{inputId}\"");
+                    Logger.Error?.Print(LogClass.Application,
+                        $"Input profile \"{inputProfileName}\" parsing failed for \"{inputId}\"");
 
                     return null;
                 }
@@ -311,7 +306,8 @@ namespace Ryujinx.Headless.SDL2
 
             string inputTypeName = isKeyboard ? "Keyboard" : "Gamepad";
 
-            Logger.Info?.Print(LogClass.Application, $"{config.PlayerIndex} configured with {inputTypeName} \"{config.Id}\"");
+            Logger.Info?.Print(LogClass.Application,
+                $"{config.PlayerIndex} configured with {inputTypeName} \"{config.Id}\"");
 
             // If both stick ranges are 0 (usually indicative of an outdated profile load) then both sticks will be set to 1.0.
             if (config is StandardControllerInputConfig controllerConfig)
@@ -321,7 +317,8 @@ namespace Ryujinx.Headless.SDL2
                     controllerConfig.RangeLeft = 1.0f;
                     controllerConfig.RangeRight = 1.0f;
 
-                    Logger.Info?.Print(LogClass.Application, $"{config.PlayerIndex} stick range reset. Save the profile now to update your configuration");
+                    Logger.Info?.Print(LogClass.Application,
+                        $"{config.PlayerIndex} stick range reset. Save the profile now to update your configuration");
                 }
             }
 
@@ -353,7 +350,8 @@ namespace Ryujinx.Headless.SDL2
                 if (option.GraphicsBackend == GraphicsBackend.OpenGl)
                 {
                     option.GraphicsBackend = GraphicsBackend.Vulkan;
-                    Logger.Warning?.Print(LogClass.Application, "OpenGL is not supported on macOS, switching to Vulkan!");
+                    Logger.Warning?.Print(LogClass.Application,
+                        "OpenGL is not supported on macOS, switching to Vulkan!");
                 }
             }
 
@@ -449,7 +447,8 @@ namespace Ryujinx.Headless.SDL2
                 }
                 else
                 {
-                    Logger.Error?.Print(LogClass.Application, "No writable log directory available. Make sure either the Logs directory, Application Data, or the Ryujinx directory is writable.");
+                    Logger.Error?.Print(LogClass.Application,
+                        "No writable log directory available. Make sure either the Logs directory, Application Data, or the Ryujinx directory is writable.");
                 }
             }
 
@@ -505,8 +504,10 @@ namespace Ryujinx.Headless.SDL2
         private static WindowBase CreateWindow(Options options)
         {
             return options.GraphicsBackend == GraphicsBackend.Vulkan
-                ? new VulkanWindow(_inputManager, options.LoggingGraphicsDebugLevel, options.AspectRatio, options.EnableMouse, options.HideCursorMode, options.IgnoreControllerApplet)
-                : new OpenGLWindow(_inputManager, options.LoggingGraphicsDebugLevel, options.AspectRatio, options.EnableMouse, options.HideCursorMode, options.IgnoreControllerApplet);
+                ? new VulkanWindow(_inputManager, options.LoggingGraphicsDebugLevel, options.AspectRatio,
+                    options.EnableMouse, options.HideCursorMode, options.IgnoreControllerApplet)
+                : new OpenGLWindow(_inputManager, options.LoggingGraphicsDebugLevel, options.AspectRatio,
+                    options.EnableMouse, options.HideCursorMode, options.IgnoreControllerApplet);
         }
 
         private static IRenderer CreateRenderer(Options options, WindowBase window)
@@ -545,7 +546,8 @@ namespace Ryujinx.Headless.SDL2
         {
             BackendThreading threadingMode = options.BackendThreading;
 
-            bool threadedGAL = threadingMode == BackendThreading.On || (threadingMode == BackendThreading.Auto && renderer.PreferThreading);
+            bool threadedGAL = threadingMode == BackendThreading.On ||
+                               (threadingMode == BackendThreading.Auto && renderer.PreferThreading);
 
             if (threadedGAL)
             {
@@ -577,7 +579,10 @@ namespace Ryujinx.Headless.SDL2
                 options.AudioVolume,
                 options.UseHypervisor ?? true,
                 options.MultiplayerLanInterfaceId,
-                Common.Configuration.Multiplayer.MultiplayerMode.Disabled);
+                Common.Configuration.Multiplayer.MultiplayerMode.Disabled,
+                false,
+                "",
+                "");
 
             return new Switch(configuration);
         }
@@ -676,6 +681,7 @@ namespace Ryujinx.Headless.SDL2
 
                             return false;
                         }
+
                         break;
                     case ".nca":
                         Logger.Info?.Print(LogClass.Application, "Loading as NCA.");
@@ -686,6 +692,7 @@ namespace Ryujinx.Headless.SDL2
 
                             return false;
                         }
+
                         break;
                     case ".nsp":
                     case ".pfs0":
@@ -697,6 +704,7 @@ namespace Ryujinx.Headless.SDL2
 
                             return false;
                         }
+
                         break;
                     default:
                         Logger.Info?.Print(LogClass.Application, "Loading as Homebrew.");
@@ -711,18 +719,21 @@ namespace Ryujinx.Headless.SDL2
                         }
                         catch (ArgumentOutOfRangeException)
                         {
-                            Logger.Error?.Print(LogClass.Application, "The specified file is not supported by Ryujinx.");
+                            Logger.Error?.Print(LogClass.Application,
+                                "The specified file is not supported by Ryujinx.");
 
                             _emulationContext.Dispose();
 
                             return false;
                         }
+
                         break;
                 }
             }
             else
             {
-                Logger.Warning?.Print(LogClass.Application, $"Couldn't load '{options.InputPath}'. Please specify a valid XCI/NCA/NSP/PFS0/NRO file.");
+                Logger.Warning?.Print(LogClass.Application,
+                    $"Couldn't load '{options.InputPath}'. Please specify a valid XCI/NCA/NSP/PFS0/NRO file.");
 
                 _emulationContext.Dispose();
 
