@@ -21,6 +21,7 @@ namespace ARMeilleure.State
             public ulong ExclusiveValueLow;
             public ulong ExclusiveValueHigh;
             public int Running;
+            public long Tpidr2El0;
         }
 
         private static NativeCtxStorage _dummyStorage = new();
@@ -110,6 +111,7 @@ namespace ARMeilleure.State
             {
                 value |= GetStorage().Flags[flag] != 0 ? 1u << flag : 0u;
             }
+
             return value;
         }
 
@@ -154,6 +156,7 @@ namespace ARMeilleure.State
                     value |= GetStorage().FpFlags[flag] != 0 ? bit : 0u;
                 }
             }
+
             return value;
         }
 
@@ -175,6 +178,9 @@ namespace ARMeilleure.State
 
         public long GetTpidrroEl0() => GetStorage().TpidrroEl0;
         public void SetTpidrroEl0(long value) => GetStorage().TpidrroEl0 = value;
+
+        public long GetTpidr2El0() => GetStorage().Tpidr2El0;
+        public void SetTpidr2El0(long value) => GetStorage().Tpidr2El0 = value;
 
         public int GetCounter() => GetStorage().Counter;
         public void SetCounter(int value) => GetStorage().Counter = value;
@@ -230,6 +236,11 @@ namespace ARMeilleure.State
         public static int GetTpidrroEl0Offset()
         {
             return StorageOffset(ref _dummyStorage, ref _dummyStorage.TpidrroEl0);
+        }
+
+        public static int GetTpidr2El0Offset()
+        {
+            return StorageOffset(ref _dummyStorage, ref _dummyStorage.Tpidr2El0);
         }
 
         public static int GetCounterOffset()
