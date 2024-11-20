@@ -4,7 +4,6 @@ using ARMeilleure.State;
 using ARMeilleure.Translation;
 using System;
 using System.Reflection;
-
 using static ARMeilleure.Instructions.InstEmitHelper;
 using static ARMeilleure.IntermediateRepresentation.Operand.Factory;
 
@@ -49,6 +48,9 @@ namespace ARMeilleure.Instructions
                 case 0b11_011_1101_0000_011:
                     EmitGetTpidrroEl0(context);
                     return;
+                case 0b11_011_1101_0000_101:
+                    EmitGetTpidr2El0(context);
+                    return;
                 case 0b11_011_1110_0000_000:
                     info = typeof(NativeInterface).GetMethod(nameof(NativeInterface.GetCntfrqEl0));
                     break;
@@ -83,6 +85,9 @@ namespace ARMeilleure.Instructions
                     return;
                 case 0b11_011_1101_0000_010:
                     EmitSetTpidrEl0(context);
+                    return;
+                case 0b11_011_1101_0000_101:
+                    EmitGetTpidr2El0(context);
                     return;
 
                 default:
@@ -125,7 +130,8 @@ namespace ARMeilleure.Instructions
 
                 case 0b11_011_0111_0101_001: // IC IVAU
                     Operand target = Register(op.Rt, RegisterType.Integer, OperandType.I64);
-                    context.Call(typeof(NativeInterface).GetMethod(nameof(NativeInterface.InvalidateCacheLine)), target);
+                    context.Call(typeof(NativeInterface).GetMethod(nameof(NativeInterface.InvalidateCacheLine)),
+                        target);
                     break;
             }
         }
@@ -197,7 +203,8 @@ namespace ARMeilleure.Instructions
 
             Operand nativeContext = context.LoadArgument(OperandType.I64, 0);
 
-            Operand result = context.Load(OperandType.I64, context.Add(nativeContext, Const((ulong)NativeContext.GetTpidrEl0Offset())));
+            Operand result = context.Load(OperandType.I64,
+                context.Add(nativeContext, Const((ulong)NativeContext.GetTpidrEl0Offset())));
 
             SetIntOrZR(context, op.Rt, result);
         }
@@ -208,8 +215,18 @@ namespace ARMeilleure.Instructions
 
             Operand nativeContext = context.LoadArgument(OperandType.I64, 0);
 
-            Operand result = context.Load(OperandType.I64, context.Add(nativeContext, Const((ulong)NativeContext.GetTpidrroEl0Offset())));
+            Operand result = context.Load(OperandType.I64,
+                context.Add(nativeContext, Const((ulong)NativeContext.GetTpidrroEl0Offset())));
 
+            SetIntOrZR(context, op.Rt, result);
+        }
+
+        private static void EmitGetTpidr2El0(ArmEmitterContext context)
+        {
+            OpCodeSystem op = (OpCodeSystem)context.CurrOp;
+            Operand nativeContext = context.LoadArgument(OperandType.I64, 0);
+            Operand result = context.Load(OperandType.I64,
+                context.Add(nativeContext, Const((ulong)NativeContext.GetTpidr2El0Offset())));
             SetIntOrZR(context, op.Rt, result);
         }
 
@@ -220,10 +237,14 @@ namespace ARMeilleure.Instructions
             Operand nzcv = GetIntOrZR(context, op.Rt);
             nzcv = context.ConvertI64ToI32(nzcv);
 
-            SetFlag(context, PState.VFlag, context.BitwiseAnd(context.ShiftRightUI(nzcv, Const((int)PState.VFlag)), Const(1)));
-            SetFlag(context, PState.CFlag, context.BitwiseAnd(context.ShiftRightUI(nzcv, Const((int)PState.CFlag)), Const(1)));
-            SetFlag(context, PState.ZFlag, context.BitwiseAnd(context.ShiftRightUI(nzcv, Const((int)PState.ZFlag)), Const(1)));
-            SetFlag(context, PState.NFlag, context.BitwiseAnd(context.ShiftRightUI(nzcv, Const((int)PState.NFlag)), Const(1)));
+            SetFlag(context, PState.VFlag,
+                context.BitwiseAnd(context.ShiftRightUI(nzcv, Const((int)PState.VFlag)), Const(1)));
+            SetFlag(context, PState.CFlag,
+                context.BitwiseAnd(context.ShiftRightUI(nzcv, Const((int)PState.CFlag)), Const(1)));
+            SetFlag(context, PState.ZFlag,
+                context.BitwiseAnd(context.ShiftRightUI(nzcv, Const((int)PState.ZFlag)), Const(1)));
+            SetFlag(context, PState.NFlag,
+                context.BitwiseAnd(context.ShiftRightUI(nzcv, Const((int)PState.NFlag)), Const(1)));
         }
 
         private static void EmitSetFpcr(ArmEmitterContext context)
@@ -237,7 +258,8 @@ namespace ARMeilleure.Instructions
             {
                 if (FPCR.Mask.HasFlag((FPCR)(1u << flag)))
                 {
-                    SetFpFlag(context, (FPState)flag, context.BitwiseAnd(context.ShiftRightUI(fpcr, Const(flag)), Const(1)));
+                    SetFpFlag(context, (FPState)flag,
+                        context.BitwiseAnd(context.ShiftRightUI(fpcr, Const(flag)), Const(1)));
                 }
             }
 
@@ -257,7 +279,8 @@ namespace ARMeilleure.Instructions
             {
                 if (FPSR.Mask.HasFlag((FPSR)(1u << flag)))
                 {
-                    SetFpFlag(context, (FPState)flag, context.BitwiseAnd(context.ShiftRightUI(fpsr, Const(flag)), Const(1)));
+                    SetFpFlag(context, (FPState)flag,
+                        context.BitwiseAnd(context.ShiftRightUI(fpsr, Const(flag)), Const(1)));
                 }
             }
 
