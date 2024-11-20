@@ -38,8 +38,8 @@ jobs:
       - name: Get version info
         id: version_info
         run: |
-          echo "build_version=${{ env.RYUJINX_BASE_VERSION }}.${{ github.run_number }}-canary" >> $GITHUB_OUTPUT
-          echo "prev_build_version=${{ env.RYUJINX_BASE_VERSION }}.$((${{ github.run_number }} - 1))-canary" >> $GITHUB_OUTPUT
+          echo "build_version=${{ env.RYUJINX_BASE_VERSION }}.${{ github.run_number }}" >> $GITHUB_OUTPUT
+          echo "prev_build_version=${{ env.RYUJINX_BASE_VERSION }}.$((${{ github.run_number }} - 1))" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Create tag
