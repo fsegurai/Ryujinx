@@ -165,8 +165,8 @@ jobs:
           
           pushd publish_appimage
           
-          mv Ryujinx.AppImage ../release_output/ryujinx-$BUILD_VERSION-$ARCH_NAME.AppImage
-          mv Ryujinx.AppImage.zsync ../release_output/ryujinx-$BUILD_VERSION-$ARCH_NAME.AppImage.zsync
+          mv Ryujinx.AppImage ../release_output/canary-ryujinx-$BUILD_VERSION-$ARCH_NAME.AppImage
+          mv Ryujinx.AppImage.zsync ../release_output/canary-ryujinx-$BUILD_VERSION-$ARCH_NAME.AppImage.zsync
           popd
         shell: bash
 
