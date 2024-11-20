@@ -124,12 +124,12 @@ jobs:
         run: |
           pushd publish
           rm libarmeilleure-jitsupport.dylib
-          7z a ../release_output/ryujinx-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.zip publish
+          7z a ../release_output/ryujinx-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.zip ../publish
           popd
 
           pushd publish_sdl2_headless
           rm libarmeilleure-jitsupport.dylib
-          7z a ../release_output/sdl2-ryujinx-headless-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.zip publish
+          7z a ../release_output/sdl2-ryujinx-headless-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.zip ../publish
           popd
         shell: bash
 
