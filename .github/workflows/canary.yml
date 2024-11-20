@@ -190,9 +190,9 @@ jobs:
       - name: Pushing new release
         uses: ncipollo/release-action@v1
         with:
-          name: ${{ steps.version_info.outputs.build_version }}-Canary
+          name: ${{ steps.version_info.outputs.build_version }}
           artifacts: "release_output/*.tar.gz,release_output/*.zip,release_output/*AppImage*"
-          tag: ${{ steps.version_info.outputs.build_version }}-Canary
+          tag: ${{ steps.version_info.outputs.build_version }}
           body: "**Full Changelog**: https://github.com/${{ github.repository }}/compare/Canary-${{ steps.version_info.outputs.prev_build_version }}...Canary-${{ steps.version_info.outputs.build_version }}"
           omitBodyDuringUpdate: true
           allowUpdates: true
@@ -267,9 +267,9 @@ jobs:
       - name: Pushing new release
         uses: ncipollo/release-action@v1
         with:
-          name: ${{ steps.version_info.outputs.build_version }}-Canary
+          name: ${{ steps.version_info.outputs.build_version }}
           artifacts: "publish/*.tar.gz, publish_headless/*.tar.gz"
-          tag: ${{ steps.version_info.outputs.build_version }}-Canary
+          tag: ${{ steps.version_info.outputs.build_version }}
           body: "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.version_info.outputs.prev_build_version }}...${{ steps.version_info.outputs.build_version }}"
           omitBodyDuringUpdate: true
           allowUpdates: true
