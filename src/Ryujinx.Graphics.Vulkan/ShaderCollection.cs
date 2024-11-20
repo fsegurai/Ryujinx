@@ -76,7 +76,8 @@ namespace Ryujinx.Graphics.Vulkan
 
             if (specDescription != null && specDescription.Length != shaders.Length)
             {
-                throw new ArgumentException($"{nameof(specDescription)} array length must match {nameof(shaders)} array if provided");
+                throw new ArgumentException(
+                    $"{nameof(specDescription)} array length must match {nameof(shaders)} array if provided");
             }
 
             gd.Shaders.Add(this);
@@ -115,14 +116,15 @@ namespace Ryujinx.Graphics.Vulkan
             _shaders = internalShaders;
 
             bool usePushDescriptors = !isMinimal &&
-                VulkanConfiguration.UsePushDescriptors &&
-                _gd.Capabilities.SupportsPushDescriptors &&
-                !IsCompute &&
-                !HasPushDescriptorsBug(gd) &&
-                CanUsePushDescriptors(gd, resourceLayout, IsCompute);
+                                      VulkanConfiguration.UsePushDescriptors &&
+                                      _gd.Capabilities.SupportsPushDescriptors &&
+                                      !IsCompute &&
+                                      !HasPushDescriptorsBug(gd) &&
+                                      CanUsePushDescriptors(gd, resourceLayout, IsCompute);
 
-            ReadOnlyCollection<ResourceDescriptorCollection> sets = usePushDescriptors ?
-                BuildPushDescriptorSets(gd, resourceLayout.Sets) : resourceLayout.Sets;
+            ReadOnlyCollection<ResourceDescriptorCollection> sets = usePushDescriptors
+                ? BuildPushDescriptorSets(gd, resourceLayout.Sets)
+                : resourceLayout.Sets;
 
             _plce = gd.PipelineLayoutCache.GetOrCreate(gd, device, sets, usePushDescriptors);
 
@@ -134,7 +136,8 @@ namespace Ryujinx.Graphics.Vulkan
             ClearSegments = BuildClearSegments(sets);
             BindingSegments = BuildBindingSegments(resourceLayout.SetUsages, out bool usesBufferTextures);
             Templates = BuildTemplates(usePushDescriptors);
-            (IncoherentBufferWriteStages, IncoherentTextureWriteStages) = BuildIncoherentStages(resourceLayout.SetUsages);
+            (IncoherentBufferWriteStages, IncoherentTextureWriteStages) =
+                BuildIncoherentStages(resourceLayout.SetUsages);
 
             // Updating buffer texture bindings using template updates crashes the Adreno driver on Windows.
             UpdateTexturesWithoutTemplate = gd.IsQualcommProprietary && usesBufferTextures;
@@ -182,6 +185,17 @@ namespace Ryujinx.Graphics.Vulkan
                     return false;
                 }
             }
+
+            //Prevent the sum of descriptors from exceeding MaxPushDescriptors
+            int totalDescriptors = 0;
+            foreach (ResourceDescriptor desc in layout.Sets.First().Descriptors)
+            {
+                if (!reserved.Contains(desc.Binding))
+                    totalDescriptors += desc.Count;
+            }
+
+            if (totalDescriptors > gd.Capabilities.MaxPushDescriptors)
+                return false;
 
             return true;
         }
@@ -233,7 +247,8 @@ namespace Ryujinx.Graphics.Vulkan
             return new(result);
         }
 
-        private static ResourceBindingSegment[][] BuildClearSegments(ReadOnlyCollection<ResourceDescriptorCollection> sets)
+        private static ResourceBindingSegment[][] BuildClearSegments(
+            ReadOnlyCollection<ResourceDescriptorCollection> sets)
         {
             ResourceBindingSegment[][] segments = new ResourceBindingSegment[sets.Count][];
 
@@ -289,7 +304,8 @@ namespace Ryujinx.Graphics.Vulkan
             return segments;
         }
 
-        private static ResourceBindingSegment[][] BuildBindingSegments(ReadOnlyCollection<ResourceUsageCollection> setUsages, out bool usesBufferTextures)
+        private static ResourceBindingSegment[][] BuildBindingSegments(
+            ReadOnlyCollection<ResourceUsageCollection> setUsages, out bool usesBufferTextures)
         {
             usesBufferTextures = false;
 
@@ -418,7 +434,8 @@ namespace Ryujinx.Graphics.Vulkan
             return result;
         }
 
-        private (PipelineStageFlags Buffer, PipelineStageFlags Texture) BuildIncoherentStages(ReadOnlyCollection<ResourceUsageCollection> setUsages)
+        private (PipelineStageFlags Buffer, PipelineStageFlags Texture) BuildIncoherentStages(
+            ReadOnlyCollection<ResourceUsageCollection> setUsages)
         {
             PipelineStageFlags buffer = PipelineStageFlags.None;
             PipelineStageFlags texture = PipelineStageFlags.None;
@@ -563,7 +580,8 @@ namespace Ryujinx.Graphics.Vulkan
             pipeline.StagesCount = (uint)_shaders.Length;
             pipeline.PipelineLayout = PipelineLayout;
 
-            pipeline.CreateGraphicsPipeline(_gd, _device, this, (_gd.Pipeline as PipelineBase).PipelineCache, renderPass.Value, throwOnError: true);
+            pipeline.CreateGraphicsPipeline(_gd, _device, this, (_gd.Pipeline as PipelineBase).PipelineCache,
+                renderPass.Value, throwOnError: true);
             pipeline.Dispose();
         }
 
@@ -624,7 +642,8 @@ namespace Ryujinx.Graphics.Vulkan
 
         public DescriptorSetTemplate GetPushDescriptorTemplate(long updateMask)
         {
-            return _plce.GetPushDescriptorTemplate(IsCompute ? PipelineBindPoint.Compute : PipelineBindPoint.Graphics, updateMask);
+            return _plce.GetPushDescriptorTemplate(IsCompute ? PipelineBindPoint.Compute : PipelineBindPoint.Graphics,
+                updateMask);
         }
 
         public void AddComputePipeline(ref SpecData key, Auto<DisposablePipeline> pipeline)
@@ -665,7 +684,8 @@ namespace Ryujinx.Graphics.Vulkan
             {
                 if (_firstBackgroundUse)
                 {
-                    Logger.Warning?.Print(LogClass.Gpu, "Background pipeline compile missed on draw - incorrect pipeline state?");
+                    Logger.Warning?.Print(LogClass.Gpu,
+                        "Background pipeline compile missed on draw - incorrect pipeline state?");
                     _firstBackgroundUse = false;
                 }
 
@@ -687,7 +707,8 @@ namespace Ryujinx.Graphics.Vulkan
             return _plce.GetNewDescriptorSetCollection(setIndex, out isNew);
         }
 
-        public Auto<DescriptorSetCollection> GetNewManualDescriptorSetCollection(CommandBufferScoped cbs, int setIndex, out int cacheIndex)
+        public Auto<DescriptorSetCollection> GetNewManualDescriptorSetCollection(CommandBufferScoped cbs, int setIndex,
+            out int cacheIndex)
         {
             return _plce.GetNewManualDescriptorSetCollection(cbs, setIndex, out cacheIndex);
         }

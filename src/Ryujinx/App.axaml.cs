@@ -26,7 +26,7 @@ namespace Ryujinx.Ava
                 ? $"{FullAppName} {Program.Version}"
                 : $"{FullAppName} {Program.Version} - {LocaleManager.Instance[windowTitleKey.Value]}";
 
-        public static readonly string FullAppName = ReleaseInformation.IsCanaryBuild ? "Ryujinx Canary" : "Ryujinx";
+        public static readonly string FullAppName = ReleaseInformation.IsCanaryBuild ? "Ryujinx (pre-release)" : "Ryujinx";
 
         public static MainWindow MainWindow => Current!
             .ApplicationLifetime.Cast<IClassicDesktopStyleApplicationLifetime>()
