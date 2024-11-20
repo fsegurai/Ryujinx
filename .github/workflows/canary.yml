@@ -38,8 +38,8 @@ jobs:
       - name: Get version info
         id: version_info
         run: |
-          echo "build_version=${{ env.RYUJINX_BASE_VERSION }}.${{ github.run_number }}-canary" >> $GITHUB_OUTPUT
-          echo "prev_build_version=${{ env.RYUJINX_BASE_VERSION }}.$((${{ github.run_number }} - 1))-canary" >> $GITHUB_OUTPUT
+          echo "build_version=${{ env.RYUJINX_BASE_VERSION }}.${{ github.run_number }}" >> $GITHUB_OUTPUT
+          echo "prev_build_version=${{ env.RYUJINX_BASE_VERSION }}.$((${{ github.run_number }} - 1))" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Create tag
@@ -124,12 +124,12 @@ jobs:
         run: |
           pushd publish
           rm libarmeilleure-jitsupport.dylib
-          7z a ../release_output/ryujinx-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.zip ../publish
+          7z a ../release_output/canary-ryujinx-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.zip ../publish
           popd
 
           pushd publish_sdl2_headless
           rm libarmeilleure-jitsupport.dylib
-          7z a ../release_output/sdl2-ryujinx-headless-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.zip ../publish
+          7z a ../release_output/canary-sdl2-ryujinx-headless-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.zip ../publish
           popd
         shell: bash
 
@@ -177,22 +177,22 @@ jobs:
           pushd publish
           rm libarmeilleure-jitsupport.dylib
           chmod +x Ryujinx.sh Ryujinx
-          tar -czvf ../release_output/ryujinx-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.tar.gz ../publish
+          tar -czvf ../release_output/canary-ryujinx-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.tar.gz ../publish
           popd
 
           pushd publish_sdl2_headless
           rm libarmeilleure-jitsupport.dylib
           chmod +x Ryujinx.sh Ryujinx.Headless.SDL2
-          tar -czvf ../release_output/sdl2-ryujinx-headless-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.tar.gz ../publish
+          tar -czvf ../release_output/canary-sdl2-ryujinx-headless-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.tar.gz ../publish
           popd
         shell: bash
 
       - name: Pushing new release
         uses: ncipollo/release-action@v1
         with:
-          name: ${{ steps.version_info.outputs.build_version }}
+          name: ${{ steps.version_info.outputs.build_version }}-Canary
           artifacts: "release_output/*.tar.gz,release_output/*.zip,release_output/*AppImage*"
-          tag: ${{ steps.version_info.outputs.build_version }}
+          tag: ${{ steps.version_info.outputs.build_version }}-Canary
           body: "**Full Changelog**: https://github.com/${{ github.repository }}/compare/Canary-${{ steps.version_info.outputs.prev_build_version }}...Canary-${{ steps.version_info.outputs.build_version }}"
           omitBodyDuringUpdate: true
           allowUpdates: true
@@ -267,9 +267,9 @@ jobs:
       - name: Pushing new release
         uses: ncipollo/release-action@v1
         with:
-          name: ${{ steps.version_info.outputs.build_version }}
+          name: ${{ steps.version_info.outputs.build_version }}-Canary
           artifacts: "publish/*.tar.gz, publish_headless/*.tar.gz"
-          tag: ${{ steps.version_info.outputs.build_version }}
+          tag: ${{ steps.version_info.outputs.build_version }}-Canary
           body: "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.version_info.outputs.prev_build_version }}...${{ steps.version_info.outputs.build_version }}"
           omitBodyDuringUpdate: true
           allowUpdates: true
