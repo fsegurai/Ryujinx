@@ -181,7 +181,7 @@ namespace Ryujinx.Ava
                     UserResult userResult = await ContentDialogHelper.CreateUpdaterUpToDateInfoDialog(
                         LocaleManager.Instance[LocaleKeys.DialogUpdaterAlreadyOnLatestVersionMessage],
                         string.Empty);
-                    if (userResult is UserResult.Yes)
+                    if (userResult is UserResult.Ok)
                     {
                         OpenHelper.OpenUrl(ReleaseInformation.GetChangelogForVersion(currentVersion));
                     }
