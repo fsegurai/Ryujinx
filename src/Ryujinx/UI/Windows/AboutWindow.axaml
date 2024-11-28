@@ -6,8 +6,10 @@
     xmlns:ext="clr-namespace:Ryujinx.Ava.Common.Markup"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:viewModel="clr-namespace:Ryujinx.Ava.UI.ViewModels"
-    Width="550"
-    Height="260"
+    MinWidth="550"
+    MinHeight="260"
+    MaxWidth="600"
+    MaxHeight="500"
     Margin="0,-12,0,0"
     d:DesignHeight="260"
     d:DesignWidth="550"
@@ -95,15 +97,15 @@
                     Orientation="Horizontal"
                     Spacing="10">
                     <Button Name="GitHubRepoButton"
-                        MinWidth="30"
-                        MinHeight="30"
-                        MaxWidth="30"
-                        MaxHeight="30"
-                        Padding="8"
-                        Background="Transparent"
-                        Click="Button_OnClick"
-                        CornerRadius="15"
-                        ToolTip.Tip="{ext:Locale AboutGithubUrlTooltipMessage}">
+                            MinWidth="30"
+                            MinHeight="30"
+                            MaxWidth="30"
+                            MaxHeight="30"
+                            Padding="8"
+                            Background="Transparent"
+                            Click="Button_OnClick"
+                            CornerRadius="15"
+                            ToolTip.Tip="{ext:Locale AboutGithubUrlTooltipMessage}">
                         <Image Source="{Binding GithubLogo}" />
                     </Button>
                 </StackPanel>
