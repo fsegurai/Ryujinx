@@ -32,7 +32,9 @@ namespace Ryujinx.Ava
     internal static class Updater
     {
         private const string GitHubApiUrl = "https://api.github.com";
-        private static readonly GithubReleasesJsonSerializerContext _serializerContext = new(JsonHelper.GetDefaultSerializerOptions());
+
+        private static readonly GithubReleasesJsonSerializerContext _serializerContext =
+            new(JsonHelper.GetDefaultSerializerOptions());
 
         private static readonly string _homeDir = AppDomain.CurrentDomain.BaseDirectory;
         private static readonly string _updateDir = Path.Combine(Path.GetTempPath(), "Ryujinx", "update");
@@ -97,7 +99,8 @@ namespace Ryujinx.Ava
             {
                 using HttpClient jsonClient = ConstructHttpClient();
 
-                string buildInfoUrl = $"{GitHubApiUrl}/repos/{ReleaseInformation.ReleaseChannelOwner}/{ReleaseInformation.ReleaseChannelRepo}/releases/latest";
+                string buildInfoUrl =
+                    $"{GitHubApiUrl}/repos/{ReleaseInformation.ReleaseChannelOwner}/{ReleaseInformation.ReleaseChannelRepo}/releases/latest";
                 string fetchedJson = await jsonClient.GetStringAsync(buildInfoUrl);
                 var fetched = JsonHelper.Deserialize(fetchedJson, _serializerContext.GithubReleasesJsonResponse);
                 _buildVer = fetched.TagName;
@@ -159,7 +162,8 @@ namespace Ryujinx.Ava
             }
             catch
             {
-                Logger.Error?.Print(LogClass.Application, $"Failed to convert the received {App.FullAppName} version from GitHub!");
+                Logger.Error?.Print(LogClass.Application,
+                    $"Failed to convert the received {App.FullAppName} version from GitHub!");
 
                 await ContentDialogHelper.CreateWarningDialog(
                     LocaleManager.Instance[LocaleKeys.DialogUpdaterConvertFailedGithubMessage],
@@ -174,9 +178,13 @@ namespace Ryujinx.Ava
             {
                 if (showVersionUpToDate)
                 {
-                    await ContentDialogHelper.CreateUpdaterInfoDialog(
+                    UserResult userResult = await ContentDialogHelper.CreateUpdaterUpToDateInfoDialog(
                         LocaleManager.Instance[LocaleKeys.DialogUpdaterAlreadyOnLatestVersionMessage],
                         string.Empty);
+                    if (userResult is UserResult.Yes)
+                    {
+                        OpenHelper.OpenUrl(ReleaseInformation.GetChangelogForVersion(currentVersion));
+                    }
                 }
 
                 _running = false;
@@ -190,33 +198,44 @@ namespace Ryujinx.Ava
             {
                 buildSizeClient.DefaultRequestHeaders.Add("Range", "bytes=0-0");
 
-                HttpResponseMessage message = await buildSizeClient.GetAsync(new Uri(_buildUrl), HttpCompletionOption.ResponseHeadersRead);
+                HttpResponseMessage message =
+                    await buildSizeClient.GetAsync(new Uri(_buildUrl), HttpCompletionOption.ResponseHeadersRead);
 
                 _buildSize = message.Content.Headers.ContentRange.Length.Value;
             }
             catch (Exception ex)
             {
                 Logger.Warning?.Print(LogClass.Application, ex.Message);
-                Logger.Warning?.Print(LogClass.Application, "Couldn't determine build size for update, using single-threaded updater");
+                Logger.Warning?.Print(LogClass.Application,
+                    "Couldn't determine build size for update, using single-threaded updater");
 
                 _buildSize = -1;
             }
 
             await Dispatcher.UIThread.InvokeAsync(async () =>
             {
+                string newVersionString = ReleaseInformation.IsCanaryBuild
+                    ? $"Canary {currentVersion} -> Canary {newVersion}"
+                    : $"{currentVersion} -> {newVersion}";
+
+                RequestUserToUpdate:
                 // Show a message asking the user if they want to update
-                var shouldUpdate = await ContentDialogHelper.CreateChoiceDialog(
+                UserResult shouldUpdate = await ContentDialogHelper.CreateUpdaterChoiceDialog(
                     LocaleManager.Instance[LocaleKeys.RyujinxUpdater],
                     LocaleManager.Instance[LocaleKeys.RyujinxUpdaterMessage],
-                    $"{Program.Version} -> {newVersion}");
-
-                if (shouldUpdate)
+                    newVersionString);
+                switch (shouldUpdate)
                 {
-                    await UpdateRyujinx(mainWindow, _buildUrl);
-                }
-                else
-                {
-                    _running = false;
+                    case UserResult.Yes:
+                        await UpdateRyujinx(mainWindow, _buildUrl);
+                        break;
+                    // Secondary button maps to no, which in this case is the show changelog button.
+                    case UserResult.No:
+                        OpenHelper.OpenUrl(ReleaseInformation.GetChangelogUrl(currentVersion, newVersion));
+                        goto RequestUserToUpdate;
+                    default:
+                        _running = false;
+                        break;
                 }
             });
         }
@@ -274,7 +293,8 @@ namespace Ryujinx.Ava
 
                 if (!OperatingSystem.IsMacOS())
                 {
-                    shouldRestart = await ContentDialogHelper.CreateChoiceDialog(LocaleManager.Instance[LocaleKeys.RyujinxUpdater],
+                    shouldRestart = await ContentDialogHelper.CreateChoiceDialog(
+                        LocaleManager.Instance[LocaleKeys.RyujinxUpdater],
                         LocaleManager.Instance[LocaleKeys.DialogUpdaterCompleteMessage],
                         LocaleManager.Instance[LocaleKeys.DialogUpdaterRestartMessage]);
                 }
@@ -292,7 +312,8 @@ namespace Ryujinx.Ava
                         string updaterScriptPath = Path.Combine(newBundlePath, "Contents", "Resources", "updater.sh");
                         string currentPid = Environment.ProcessId.ToString();
 
-                        arguments.InsertRange(0, new List<string> { updaterScriptPath, baseBundlePath, newBundlePath, currentPid });
+                        arguments.InsertRange(0,
+                            new List<string> { updaterScriptPath, baseBundlePath, newBundlePath, currentPid });
                         Process.Start("/bin/bash", arguments);
                     }
                     else
@@ -314,8 +335,7 @@ namespace Ryujinx.Ava
 
                         ProcessStartInfo processStart = new(ryuName)
                         {
-                            UseShellExecute = true,
-                            WorkingDirectory = executableDirectory,
+                            UseShellExecute = true, WorkingDirectory = executableDirectory,
                         };
 
                         foreach (string argument in CommandLineState.Arguments)
@@ -375,7 +395,8 @@ namespace Ryujinx.Ava
                     Interlocked.Exchange(ref progressPercentage[index], args.ProgressPercentage);
                     Interlocked.Add(ref totalProgressPercentage, args.ProgressPercentage);
 
-                    taskDialog.SetProgressBarState(totalProgressPercentage / ConnectionCount, TaskDialogProgressState.Normal);
+                    taskDialog.SetProgressBarState(totalProgressPercentage / ConnectionCount,
+                        TaskDialogProgressState.Normal);
                 };
 
                 client.DownloadDataCompleted += (_, args) =>
@@ -397,9 +418,12 @@ namespace Ryujinx.Ava
                     if (Equals(completedRequests, ConnectionCount))
                     {
                         byte[] mergedFileBytes = new byte[_buildSize];
-                        for (int connectionIndex = 0, destinationOffset = 0; connectionIndex < ConnectionCount; connectionIndex++)
+                        for (int connectionIndex = 0, destinationOffset = 0;
+                             connectionIndex < ConnectionCount;
+                             connectionIndex++)
                         {
-                            Array.Copy(list[connectionIndex], 0, mergedFileBytes, destinationOffset, list[connectionIndex].Length);
+                            Array.Copy(list[connectionIndex], 0, mergedFileBytes, destinationOffset,
+                                list[connectionIndex].Length);
                             destinationOffset += list[connectionIndex].Length;
                         }
 
@@ -408,7 +432,8 @@ namespace Ryujinx.Ava
                         // On macOS, ensure that we remove the quarantine bit to prevent Gatekeeper from blocking execution.
                         if (OperatingSystem.IsMacOS())
                         {
-                            using Process xattrProcess = Process.Start("xattr", new List<string> { "-d", "com.apple.quarantine", updateFile });
+                            using Process xattrProcess = Process.Start("xattr",
+                                new List<string> { "-d", "com.apple.quarantine", updateFile });
 
                             xattrProcess.WaitForExit();
                         }
@@ -420,7 +445,8 @@ namespace Ryujinx.Ava
                         catch (Exception e)
                         {
                             Logger.Warning?.Print(LogClass.Application, e.Message);
-                            Logger.Warning?.Print(LogClass.Application, "Multi-Threaded update failed, falling back to single-threaded updater.");
+                            Logger.Warning?.Print(LogClass.Application,
+                                "Multi-Threaded update failed, falling back to single-threaded updater.");
 
                             DoUpdateWithSingleThread(taskDialog, downloadUrl, updateFile);
                         }
@@ -434,7 +460,8 @@ namespace Ryujinx.Ava
                 catch (WebException ex)
                 {
                     Logger.Warning?.Print(LogClass.Application, ex.Message);
-                    Logger.Warning?.Print(LogClass.Application, "Multi-Threaded update failed, falling back to single-threaded updater.");
+                    Logger.Warning?.Print(LogClass.Application,
+                        "Multi-Threaded update failed, falling back to single-threaded updater.");
 
                     foreach (WebClient webClient in webClients)
                     {
@@ -454,7 +481,8 @@ namespace Ryujinx.Ava
             // We do not want to timeout while downloading
             client.Timeout = TimeSpan.FromDays(1);
 
-            using HttpResponseMessage response = client.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead).Result;
+            using HttpResponseMessage response =
+                client.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead).Result;
             using Stream remoteFileStream = response.Content.ReadAsStreamAsync().Result;
             using Stream updateFileStream = File.Open(updateFile, FileMode.Create);
 
@@ -533,7 +561,8 @@ namespace Ryujinx.Ava
                         return;
                     }
 
-                    taskDialog.SetProgressBarState(GetPercentage(tarEntry.Size, inStream.Length), TaskDialogProgressState.Normal);
+                    taskDialog.SetProgressBarState(GetPercentage(tarEntry.Size, inStream.Length),
+                        TaskDialogProgressState.Normal);
                 });
             }
         }
@@ -611,12 +640,14 @@ namespace Ryujinx.Ava
 
                         Dispatcher.UIThread.InvokeAsync(() =>
                         {
-                            taskDialog.SetProgressBarState(GetPercentage(count, allFiles.Count), TaskDialogProgressState.Normal);
+                            taskDialog.SetProgressBarState(GetPercentage(count, allFiles.Count),
+                                TaskDialogProgressState.Normal);
                         });
                     }
                     catch
                     {
-                        Logger.Warning?.Print(LogClass.Application, LocaleManager.Instance.UpdateAndGetDynamicValue(LocaleKeys.UpdaterRenameFailed, file));
+                        Logger.Warning?.Print(LogClass.Application,
+                            LocaleManager.Instance.UpdateAndGetDynamicValue(LocaleKeys.UpdaterRenameFailed, file));
                     }
                 }
 
@@ -702,8 +733,10 @@ namespace Ryujinx.Ava
             if (_running && !OperatingSystem.IsMacOS())
             {
                 // Compare the loose files in base directory against the loose files from the incoming update, and store foreign ones in a user list.
-                var oldFiles = Directory.EnumerateFiles(_homeDir, "*", SearchOption.TopDirectoryOnly).Select(Path.GetFileName);
-                var newFiles = Directory.EnumerateFiles(_updatePublishDir, "*", SearchOption.TopDirectoryOnly).Select(Path.GetFileName);
+                var oldFiles = Directory.EnumerateFiles(_homeDir, "*", SearchOption.TopDirectoryOnly)
+                    .Select(Path.GetFileName);
+                var newFiles = Directory.EnumerateFiles(_updatePublishDir, "*", SearchOption.TopDirectoryOnly)
+                    .Select(Path.GetFileName);
                 var userFiles = oldFiles.Except(newFiles).Select(filename => Path.Combine(_homeDir, filename));
 
                 // Remove user files from the paths in files.

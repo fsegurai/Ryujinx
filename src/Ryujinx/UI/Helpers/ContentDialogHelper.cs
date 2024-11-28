@@ -21,14 +21,14 @@ namespace Ryujinx.Ava.UI.Helpers
         private static ContentDialogOverlayWindow _contentDialogOverlayWindow;
 
         private async static Task<UserResult> ShowContentDialog(
-             string title,
-             object content,
-             string primaryButton,
-             string secondaryButton,
-             string closeButton,
-             UserResult primaryButtonResult = UserResult.Ok,
-             ManualResetEvent deferResetEvent = null,
-             TypedEventHandler<ContentDialog, ContentDialogButtonClickEventArgs> deferCloseAction = null)
+            string title,
+            object content,
+            string primaryButton,
+            string secondaryButton,
+            string closeButton,
+            UserResult primaryButtonResult = UserResult.Ok,
+            ManualResetEvent deferResetEvent = null,
+            TypedEventHandler<ContentDialog, ContentDialogButtonClickEventArgs> deferCloseAction = null)
         {
             UserResult result = UserResult.None;
 
@@ -81,7 +81,8 @@ namespace Ryujinx.Ava.UI.Helpers
         {
             Grid content = CreateTextDialogContent(primaryText, secondaryText, iconSymbol);
 
-            return await ShowContentDialog(title, content, primaryButton, secondaryButton, closeButton, primaryButtonResult, deferResetEvent, deferCloseAction);
+            return await ShowContentDialog(title, content, primaryButton, secondaryButton, closeButton,
+                primaryButtonResult, deferResetEvent, deferCloseAction);
         }
 
         public static async Task<UserResult> ShowDeferredContentDialog(
@@ -148,10 +149,7 @@ namespace Ryujinx.Ava.UI.Helpers
         {
             Grid content = new()
             {
-                RowDefinitions = [new(), new()],
-                ColumnDefinitions = [new(GridLength.Auto), new()],
-
-                MinHeight = 80,
+                RowDefinitions = [new(), new()], ColumnDefinitions = [new(GridLength.Auto), new()], MinHeight = 80,
             };
 
             SymbolIcon icon = new()
@@ -168,18 +166,12 @@ namespace Ryujinx.Ava.UI.Helpers
 
             TextBlock primaryLabel = new()
             {
-                Text = primaryText,
-                Margin = new Thickness(5),
-                TextWrapping = TextWrapping.Wrap,
-                MaxWidth = 450,
+                Text = primaryText, Margin = new Thickness(5), TextWrapping = TextWrapping.Wrap, MaxWidth = 450,
             };
 
             TextBlock secondaryLabel = new()
             {
-                Text = secondaryText,
-                Margin = new Thickness(5),
-                TextWrapping = TextWrapping.Wrap,
-                MaxWidth = 450,
+                Text = secondaryText, Margin = new Thickness(5), TextWrapping = TextWrapping.Wrap, MaxWidth = 450,
             };
 
             Grid.SetColumn(primaryLabel, 1);
@@ -225,7 +217,7 @@ namespace Ryujinx.Ava.UI.Helpers
                 cancelButtonText,
                 (int)Symbol.Help,
                 primaryButtonResult);
-        
+
         internal static async Task<UserResult> CreateDeniableConfirmationDialog(
             string primaryText,
             string secondaryText,
@@ -244,7 +236,8 @@ namespace Ryujinx.Ava.UI.Helpers
                 (int)Symbol.Help,
                 primaryButtonResult);
 
-        internal static async Task<UserResult> CreateLocalizedConfirmationDialog(string primaryText, string secondaryText)
+        internal static async Task<UserResult> CreateLocalizedConfirmationDialog(string primaryText,
+            string secondaryText)
             => await CreateConfirmationDialog(
                 primaryText,
                 secondaryText,
@@ -258,6 +251,16 @@ namespace Ryujinx.Ava.UI.Helpers
                 primary,
                 secondaryText,
                 string.Empty,
+                string.Empty,
+                LocaleManager.Instance[LocaleKeys.InputDialogOk],
+                (int)Symbol.Important);
+
+        internal static async Task<UserResult> CreateUpdaterUpToDateInfoDialog(string primary, string secondaryText)
+            => await ShowTextDialog(
+                LocaleManager.Instance[LocaleKeys.DialogUpdaterTitle],
+                primary,
+                secondaryText,
+                LocaleManager.Instance[LocaleKeys.DialogUpdaterShowChangelogMessage],
                 string.Empty,
                 LocaleManager.Instance[LocaleKeys.InputDialogOk],
                 (int)Symbol.Important);
@@ -308,6 +311,28 @@ namespace Ryujinx.Ava.UI.Helpers
             _isChoiceDialogOpen = false;
 
             return response == UserResult.Yes;
+        }
+
+        internal static async Task<UserResult> CreateUpdaterChoiceDialog(string title, string primary,
+            string secondaryText)
+        {
+            if (_isChoiceDialogOpen)
+            {
+                return UserResult.Cancel;
+            }
+
+            _isChoiceDialogOpen = true;
+            UserResult response = await ShowTextDialog(
+                title,
+                primary,
+                secondaryText,
+                LocaleManager.Instance[LocaleKeys.InputDialogYes],
+                LocaleManager.Instance[LocaleKeys.DialogUpdaterShowChangelogMessage],
+                LocaleManager.Instance[LocaleKeys.InputDialogNo],
+                (int)Symbol.Help,
+                UserResult.Yes);
+            _isChoiceDialogOpen = false;
+            return response;
         }
 
         internal static async Task<bool> CreateExitDialog()
@@ -401,7 +426,8 @@ namespace Ryujinx.Ava.UI.Helpers
                 {
                     result = ContentDialogResult.None;
 
-                    Logger.Warning?.Print(LogClass.UI, "Content dialog overlay failed to populate. Default value has been returned.");
+                    Logger.Warning?.Print(LogClass.UI,
+                        "Content dialog overlay failed to populate. Default value has been returned.");
                 }
 
                 return result;

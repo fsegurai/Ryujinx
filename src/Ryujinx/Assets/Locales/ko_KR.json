@@ -450,6 +450,7 @@
   "DialogUpdaterExtractionMessage": "업데이트 추출 중...",
   "DialogUpdaterRenamingMessage": "업데이트 이름 바꾸는 중...",
   "DialogUpdaterAddingFilesMessage": "새 업데이트 추가 중...",
+  "DialogUpdaterShowChangelogMessage": "변경 로그 표시",
   "DialogUpdaterCompleteMessage": "업데이트를 완료했습니다!",
   "DialogUpdaterRestartMessage": "지금 Ryujinx를 다시 시작하겠습니까?",
   "DialogUpdaterNoInternetMessage": "인터넷에 연결되어 있지 않습니다!",

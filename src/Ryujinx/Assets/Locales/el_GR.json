@@ -450,6 +450,7 @@
   "DialogUpdaterExtractionMessage": "Εξαγωγή Ενημέρωσης...",
   "DialogUpdaterRenamingMessage": "Μετονομασία Ενημέρωσης...",
   "DialogUpdaterAddingFilesMessage": "Προσθήκη Νέας Ενημέρωσης...",
+  "DialogUpdaterShowChangelogMessage": "Εμφάνιση Αλλαγών...",
   "DialogUpdaterCompleteMessage": "Η Ενημέρωση Ολοκληρώθηκε!",
   "DialogUpdaterRestartMessage": "Θέλετε να επανεκκινήσετε το Ryujinx τώρα;",
   "DialogUpdaterNoInternetMessage": "Δεν είστε συνδεδεμένοι στο Διαδίκτυο!",

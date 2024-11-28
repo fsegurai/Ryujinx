@@ -450,6 +450,7 @@
   "DialogUpdaterExtractionMessage": "מחלץ עדכון...",
   "DialogUpdaterRenamingMessage": "משנה את שם העדכון...",
   "DialogUpdaterAddingFilesMessage": "מוסיף עדכון חדש...",
+  "DialogUpdaterShowChangelogMessage": "הצג שינויים בגרסה",
   "DialogUpdaterCompleteMessage": "העדכון הושלם!",
   "DialogUpdaterRestartMessage": "האם אתם רוצים להפעיל מחדש את ריוג'ינקס עכשיו?",
   "DialogUpdaterNoInternetMessage": "אתם לא מחוברים לאינטרנט!",
