@@ -30,7 +30,8 @@ namespace ARMeilleure.Translation.PTC
         private const string OuterHeaderMagicString = "PTCohd\0\0";
         private const string InnerHeaderMagicString = "PTCihd\0\0";
 
-        private const uint InternalVersion = 6950; //! To be incremented manually for each change to the ARMeilleure project.
+        private const uint
+            InternalVersion = 6992; //! To be incremented manually for each change to the ARMeilleure project.
 
         private const string ActualDir = "0";
         private const string BackupDir = "1";
@@ -41,6 +42,7 @@ namespace ARMeilleure.Translation.PTC
         public static readonly Symbol PageTableSymbol = new(SymbolType.Special, 1);
         public static readonly Symbol CountTableSymbol = new(SymbolType.Special, 2);
         public static readonly Symbol DispatchStubSymbol = new(SymbolType.Special, 3);
+        public static readonly Symbol FunctionTableSymbol = new(SymbolType.Special, 4);
 
         private const byte FillingByte = 0x00;
         private const CompressionLevel SaveCompressionLevel = CompressionLevel.Fastest;
@@ -83,8 +85,12 @@ namespace ARMeilleure.Translation.PTC
 
             InitializeCarriers();
 
-            _outerHeaderMagic = BinaryPrimitives.ReadUInt64LittleEndian(EncodingCache.UTF8NoBOM.GetBytes(OuterHeaderMagicString).AsSpan());
-            _innerHeaderMagic = BinaryPrimitives.ReadUInt64LittleEndian(EncodingCache.UTF8NoBOM.GetBytes(InnerHeaderMagicString).AsSpan());
+            _outerHeaderMagic =
+                BinaryPrimitives.ReadUInt64LittleEndian(EncodingCache.UTF8NoBOM.GetBytes(OuterHeaderMagicString)
+                    .AsSpan());
+            _innerHeaderMagic =
+                BinaryPrimitives.ReadUInt64LittleEndian(EncodingCache.UTF8NoBOM.GetBytes(InnerHeaderMagicString)
+                    .AsSpan());
 
             _waitEvent = new ManualResetEvent(true);
 
@@ -101,14 +107,16 @@ namespace ARMeilleure.Translation.PTC
             Disable();
         }
 
-        public void Initialize(string titleIdText, string displayVersion, bool enabled, MemoryManagerType memoryMode)
+        public void Initialize(string titleIdText, string displayVersion, bool enabled, MemoryManagerType memoryMode,
+            string cacheSelector)
         {
             Wait();
 
             Profiler.Wait();
             Profiler.ClearEntries();
 
-            Logger.Info?.Print(LogClass.Ptc, $"Initializing Profiled Persistent Translation Cache (enabled: {enabled}).");
+            Logger.Info?.Print(LogClass.Ptc,
+                $"Initializing Profiled Persistent Translation Cache (enabled: {enabled}).");
 
             if (!enabled || string.IsNullOrEmpty(titleIdText) || titleIdText == TitleIdTextDefault)
             {
@@ -127,6 +135,8 @@ namespace ARMeilleure.Translation.PTC
             DisplayVersion = !string.IsNullOrEmpty(displayVersion) ? displayVersion : DisplayVersionDefault;
             _memoryMode = memoryMode;
 
+            Logger.Info?.Print(LogClass.Ptc, $"PPTC (v{InternalVersion}) Profile: {DisplayVersion}-{cacheSelector}");
+
             string workPathActual = Path.Combine(AppDataManager.GamesDirPath, TitleIdText, "cache", "cpu", ActualDir);
             string workPathBackup = Path.Combine(AppDataManager.GamesDirPath, TitleIdText, "cache", "cpu", BackupDir);
 
@@ -140,8 +150,8 @@ namespace ARMeilleure.Translation.PTC
                 Directory.CreateDirectory(workPathBackup);
             }
 
-            CachePathActual = Path.Combine(workPathActual, DisplayVersion);
-            CachePathBackup = Path.Combine(workPathBackup, DisplayVersion);
+            CachePathActual = Path.Combine(workPathActual, DisplayVersion) + "-" + cacheSelector;
+            CachePathBackup = Path.Combine(workPathBackup, DisplayVersion) + "-" + cacheSelector;
 
             PreLoad();
             Profiler.PreLoad();
@@ -167,7 +177,8 @@ namespace ARMeilleure.Translation.PTC
 
         private bool AreCarriersEmpty()
         {
-            return _infosStream.Length == 0L && _codesList.Count == 0 && _relocsStream.Length == 0L && _unwindInfosStream.Length == 0L;
+            return _infosStream.Length == 0L && _codesList.Count == 0 && _relocsStream.Length == 0L &&
+                   _unwindInfosStream.Length == 0L;
         }
 
         private void ResetCarriersIfNeeded()
@@ -275,7 +286,8 @@ namespace ARMeilleure.Translation.PTC
                 {
                     intPtr = Marshal.AllocHGlobal(new nint(outerHeader.UncompressedStreamSize));
 
-                    using UnmanagedMemoryStream stream = new((byte*)intPtr.ToPointer(), outerHeader.UncompressedStreamSize, outerHeader.UncompressedStreamSize, FileAccess.ReadWrite);
+                    using UnmanagedMemoryStream stream = new((byte*)intPtr.ToPointer(),
+                        outerHeader.UncompressedStreamSize, outerHeader.UncompressedStreamSize, FileAccess.ReadWrite);
                     try
                     {
                         deflateStream.CopyTo(stream);
@@ -319,7 +331,9 @@ namespace ARMeilleure.Translation.PTC
                         return false;
                     }
 
-                    ReadOnlySpan<byte> codesBytes = (int)innerHeader.CodesLength > 0 ? new(stream.PositionPointer, (int)innerHeader.CodesLength) : ReadOnlySpan<byte>.Empty;
+                    ReadOnlySpan<byte> codesBytes = (int)innerHeader.CodesLength > 0
+                        ? new(stream.PositionPointer, (int)innerHeader.CodesLength)
+                        : ReadOnlySpan<byte>.Empty;
                     stream.Seek(innerHeader.CodesLength, SeekOrigin.Current);
 
                     Hash128 codesHash = Hash128.ComputeHash(codesBytes);
@@ -383,7 +397,8 @@ namespace ARMeilleure.Translation.PTC
 
             long fileSize = new FileInfo(fileName).Length;
 
-            Logger.Info?.Print(LogClass.Ptc, $"{(isBackup ? "Loaded Backup Translation Cache" : "Loaded Translation Cache")} (size: {fileSize} bytes, translated functions: {GetEntriesCount()}).");
+            Logger.Info?.Print(LogClass.Ptc,
+                $"{(isBackup ? "Loaded Backup Translation Cache" : "Loaded Translation Cache")} (size: {fileSize} bytes, translated functions: {GetEntriesCount()}).");
 
             return true;
         }
@@ -428,7 +443,6 @@ namespace ARMeilleure.Translation.PTC
             InnerHeader innerHeader = new()
             {
                 Magic = _innerHeaderMagic,
-
                 InfosLength = (int)_infosStream.Length,
                 CodesLength = _codesList.Length(),
                 RelocsLength = (int)_relocsStream.Length,
@@ -438,20 +452,18 @@ namespace ARMeilleure.Translation.PTC
             OuterHeader outerHeader = new()
             {
                 Magic = _outerHeaderMagic,
-
                 CacheFileVersion = InternalVersion,
                 Endianness = GetEndianness(),
                 FeatureInfo = GetFeatureInfo(),
                 MemoryManagerMode = GetMemoryManagerMode(),
                 OSPlatform = GetOSPlatform(),
                 Architecture = (uint)RuntimeInformation.ProcessArchitecture,
-
                 UncompressedStreamSize =
-                (long)Unsafe.SizeOf<InnerHeader>() +
-                innerHeader.InfosLength +
-                innerHeader.CodesLength +
-                innerHeader.RelocsLength +
-                innerHeader.UnwindInfosLength,
+                    (long)Unsafe.SizeOf<InnerHeader>() +
+                    innerHeader.InfosLength +
+                    innerHeader.CodesLength +
+                    innerHeader.RelocsLength +
+                    innerHeader.UnwindInfosLength,
             };
 
             outerHeader.SetHeaderHash();
@@ -462,13 +474,16 @@ namespace ARMeilleure.Translation.PTC
             {
                 intPtr = Marshal.AllocHGlobal(new nint(outerHeader.UncompressedStreamSize));
 
-                using UnmanagedMemoryStream stream = new((byte*)intPtr.ToPointer(), outerHeader.UncompressedStreamSize, outerHeader.UncompressedStreamSize, FileAccess.ReadWrite);
+                using UnmanagedMemoryStream stream = new((byte*)intPtr.ToPointer(), outerHeader.UncompressedStreamSize,
+                    outerHeader.UncompressedStreamSize, FileAccess.ReadWrite);
                 stream.Seek((long)Unsafe.SizeOf<InnerHeader>(), SeekOrigin.Begin);
 
                 ReadOnlySpan<byte> infosBytes = new(stream.PositionPointer, innerHeader.InfosLength);
                 _infosStream.WriteTo(stream);
 
-                ReadOnlySpan<byte> codesBytes = (int)innerHeader.CodesLength > 0 ? new(stream.PositionPointer, (int)innerHeader.CodesLength) : ReadOnlySpan<byte>.Empty;
+                ReadOnlySpan<byte> codesBytes = (int)innerHeader.CodesLength > 0
+                    ? new(stream.PositionPointer, (int)innerHeader.CodesLength)
+                    : ReadOnlySpan<byte>.Empty;
                 _codesList.WriteTo(stream);
 
                 ReadOnlySpan<byte> relocsBytes = new(stream.PositionPointer, innerHeader.RelocsLength);
@@ -524,7 +539,8 @@ namespace ARMeilleure.Translation.PTC
 
             if (fileSize != 0L)
             {
-                Logger.Info?.Print(LogClass.Ptc, $"Saved Translation Cache (size: {fileSize} bytes, translated functions: {translatedFuncsCount}).");
+                Logger.Info?.Print(LogClass.Ptc,
+                    $"Saved Translation Cache (size: {fileSize} bytes, translated functions: {translatedFuncsCount}).");
             }
         }
 
@@ -559,9 +575,12 @@ namespace ARMeilleure.Translation.PTC
                         continue;
                     }
 
-                    bool isEntryChanged = infoEntry.Hash != ComputeHash(translator.Memory, infoEntry.Address, infoEntry.GuestSize);
+                    bool isEntryChanged = infoEntry.Hash !=
+                                          ComputeHash(translator.Memory, infoEntry.Address, infoEntry.GuestSize);
 
-                    if (isEntryChanged || (!infoEntry.HighCq && Profiler.ProfiledFuncs.TryGetValue(infoEntry.Address, out var value) && value.HighCq))
+                    if (isEntryChanged || (!infoEntry.HighCq &&
+                                           Profiler.ProfiledFuncs.TryGetValue(infoEntry.Address, out var value) &&
+                                           value.HighCq))
                     {
                         infoEntry.Stubbed = true;
                         infoEntry.CodeLength = 0;
@@ -573,7 +592,8 @@ namespace ARMeilleure.Translation.PTC
 
                         if (isEntryChanged)
                         {
-                            Logger.Info?.Print(LogClass.Ptc, $"Invalidated translated function (address: 0x{infoEntry.Address:X16})");
+                            Logger.Info?.Print(LogClass.Ptc,
+                                $"Invalidated translated function (address: 0x{infoEntry.Address:X16})");
                         }
 
                         continue;
@@ -592,7 +612,8 @@ namespace ARMeilleure.Translation.PTC
 
                     UnwindInfo unwindInfo = ReadUnwindInfo(unwindInfosReader);
 
-                    TranslatedFunction func = FastTranslate(code, callCounter, infoEntry.GuestSize, unwindInfo, infoEntry.HighCq);
+                    TranslatedFunction func = FastTranslate(code, callCounter, infoEntry.GuestSize, unwindInfo,
+                        infoEntry.HighCq);
 
                     translator.RegisterFunction(infoEntry.Address, func);
 
@@ -604,9 +625,11 @@ namespace ARMeilleure.Translation.PTC
 
             if (_infosStream.Length != infosStreamLength || _infosStream.Position != infosStreamLength ||
                 _relocsStream.Length != relocsStreamLength || _relocsStream.Position != relocsStreamLength ||
-                _unwindInfosStream.Length != unwindInfosStreamLength || _unwindInfosStream.Position != unwindInfosStreamLength)
+                _unwindInfosStream.Length != unwindInfosStreamLength ||
+                _unwindInfosStream.Position != unwindInfosStreamLength)
             {
-                throw new Exception("The length of a memory stream has changed, or its position has not reached or has exceeded its end.");
+                throw new Exception(
+                    "The length of a memory stream has changed, or its position has not reached or has exceeded its end.");
             }
 
             Logger.Info?.Print(LogClass.Ptc, $"{translator.Functions.Count} translated functions loaded");
@@ -659,7 +682,8 @@ namespace ARMeilleure.Translation.PTC
             return relocEntries;
         }
 
-        private static void PatchCode(Translator translator, Span<byte> code, RelocEntry[] relocEntries, out Counter<uint> callCounter)
+        private static void PatchCode(Translator translator, Span<byte> code, RelocEntry[] relocEntries,
+            out Counter<uint> callCounter)
         {
             callCounter = null;
 
@@ -706,6 +730,10 @@ namespace ARMeilleure.Translation.PTC
                 {
                     imm = translator.Stubs.DispatchStub;
                 }
+                else if (symbol == FunctionTableSymbol)
+                {
+                    imm = translator.FunctionTable.Base;
+                }
 
                 if (imm == null)
                 {
@@ -729,7 +757,8 @@ namespace ARMeilleure.Translation.PTC
                 int regIndex = unwindInfosReader.ReadInt32();
                 int stackOffsetOrAllocSize = unwindInfosReader.ReadInt32();
 
-                pushEntries[i] = new UnwindPushEntry((UnwindPseudoOp)pseudoOp, prologOffset, regIndex, stackOffsetOrAllocSize);
+                pushEntries[i] = new UnwindPushEntry((UnwindPseudoOp)pseudoOp, prologOffset, regIndex,
+                    stackOffsetOrAllocSize);
             }
 
             int prologueSize = unwindInfosReader.ReadInt32();
@@ -797,7 +826,6 @@ namespace ARMeilleure.Translation.PTC
             }
 
 
-
             int degreeOfParallelism = Environment.ProcessorCount;
 
             if (Optimizations.LowPower)
@@ -809,7 +837,8 @@ namespace ARMeilleure.Translation.PTC
                 degreeOfParallelism--;
             }
 
-            Logger.Info?.Print(LogClass.Ptc, $"{_translateCount} of {_translateTotalCount} functions translated | Thread count: {degreeOfParallelism}");
+            Logger.Info?.Print(LogClass.Ptc,
+                $"{_translateCount} of {_translateTotalCount} functions translated | Thread count: {degreeOfParallelism}");
 
             PtcStateChanged?.Invoke(PtcLoadingState.Start, _translateCount, _translateTotalCount);
 
@@ -817,9 +846,7 @@ namespace ARMeilleure.Translation.PTC
 
             Thread progressReportThread = new(ReportProgress)
             {
-                Name = "Ptc.ProgressReporter",
-                Priority = ThreadPriority.Lowest,
-                IsBackground = true,
+                Name = "Ptc.ProgressReporter", Priority = ThreadPriority.Lowest, IsBackground = true,
             };
 
             progressReportThread.Start(progressReportEvent);
@@ -832,7 +859,8 @@ namespace ARMeilleure.Translation.PTC
 
                     Debug.Assert(Profiler.IsAddressInStaticCodeRange(address));
 
-                    TranslatedFunction func = translator.Translate(address, item.funcProfile.Mode, item.funcProfile.HighCq);
+                    TranslatedFunction func =
+                        translator.Translate(address, item.funcProfile.Mode, item.funcProfile.HighCq);
 
                     bool isAddressUnique = translator.Functions.TryAdd(address, func.GuestSize, func);
 
@@ -850,12 +878,8 @@ namespace ARMeilleure.Translation.PTC
             }
 
             List<Thread> threads = Enumerable.Range(0, degreeOfParallelism)
-                .Select(idx => 
-                    new Thread(TranslateFuncs)
-                    {
-                        IsBackground = true, 
-                        Name = "Ptc.TranslateThread." + idx 
-                    }
+                .Select(idx =>
+                    new Thread(TranslateFuncs) { IsBackground = true, Name = "Ptc.TranslateThread." + idx }
                 ).ToList();
 
             Stopwatch sw = Stopwatch.StartNew();
@@ -864,6 +888,7 @@ namespace ARMeilleure.Translation.PTC
             {
                 thread.Start();
             }
+
             foreach (var thread in threads)
             {
                 thread.Join();
@@ -878,13 +903,10 @@ namespace ARMeilleure.Translation.PTC
 
             PtcStateChanged?.Invoke(PtcLoadingState.Loaded, _translateCount, _translateTotalCount);
 
-            Logger.Info?.Print(LogClass.Ptc, $"{_translateCount} of {_translateTotalCount} functions translated | Thread count: {degreeOfParallelism} in {sw.Elapsed.TotalSeconds} s");
+            Logger.Info?.Print(LogClass.Ptc,
+                $"{_translateCount} of {_translateTotalCount} functions translated | Thread count: {degreeOfParallelism} in {sw.Elapsed.TotalSeconds} s");
 
-            Thread preSaveThread = new(PreSave)
-            {
-                IsBackground = true,
-                Name = "Ptc.DiskWriter"
-            };
+            Thread preSaveThread = new(PreSave) { IsBackground = true, Name = "Ptc.DiskWriter" };
             preSaveThread.Start();
         }
 
@@ -905,8 +927,7 @@ namespace ARMeilleure.Translation.PTC
                     PtcStateChanged?.Invoke(PtcLoadingState.Loading, newCount, _translateTotalCount);
                     count = newCount;
                 }
-            }
-            while (!endEvent.WaitOne(RefreshRate));
+            } while (!endEvent.WaitOne(RefreshRate));
         }
 
         public static Hash128 ComputeHash(IMemoryManager memory, ulong address, ulong guestSize)
@@ -914,7 +935,8 @@ namespace ARMeilleure.Translation.PTC
             return Hash128.ComputeHash(memory.GetSpan(address, checked((int)(guestSize))));
         }
 
-        public void WriteCompiledFunction(ulong address, ulong guestSize, Hash128 hash, bool highCq, CompiledFunction compiledFunc)
+        public void WriteCompiledFunction(ulong address, ulong guestSize, Hash128 hash, bool highCq,
+            CompiledFunction compiledFunc)
         {
             lock (_lock)
             {
@@ -1011,15 +1033,15 @@ namespace ARMeilleure.Translation.PTC
 
 #pragma warning disable IDE0055 // Disable formatting
             osPlatform |= (OperatingSystem.IsFreeBSD() ? 1u : 0u) << 0;
-            osPlatform |= (OperatingSystem.IsLinux()   ? 1u : 0u) << 1;
-            osPlatform |= (OperatingSystem.IsMacOS()   ? 1u : 0u) << 2;
+            osPlatform |= (OperatingSystem.IsLinux() ? 1u : 0u) << 1;
+            osPlatform |= (OperatingSystem.IsMacOS() ? 1u : 0u) << 2;
             osPlatform |= (OperatingSystem.IsWindows() ? 1u : 0u) << 3;
 #pragma warning restore IDE0055
 
             return osPlatform;
         }
 
-        [StructLayout(LayoutKind.Sequential, Pack = 1/*, Size = 86*/)]
+        [StructLayout(LayoutKind.Sequential, Pack = 1 /*, Size = 86*/)]
         private struct OuterHeader
         {
             public ulong Magic;
@@ -1040,21 +1062,31 @@ namespace ARMeilleure.Translation.PTC
             {
                 Span<OuterHeader> spanHeader = MemoryMarshal.CreateSpan(ref this, 1);
 
-                HeaderHash = Hash128.ComputeHash(MemoryMarshal.AsBytes(spanHeader)[..(Unsafe.SizeOf<OuterHeader>() - Unsafe.SizeOf<Hash128>())]);
+                HeaderHash =
+                    Hash128.ComputeHash(
+                        MemoryMarshal.AsBytes(spanHeader)[..(Unsafe.SizeOf<OuterHeader>() - Unsafe.SizeOf<Hash128>())]);
             }
 
             public bool IsHeaderValid()
             {
                 Span<OuterHeader> spanHeader = MemoryMarshal.CreateSpan(ref this, 1);
 
-                return Hash128.ComputeHash(MemoryMarshal.AsBytes(spanHeader)[..(Unsafe.SizeOf<OuterHeader>() - Unsafe.SizeOf<Hash128>())]) == HeaderHash;
+                return Hash128.ComputeHash(
+                           MemoryMarshal.AsBytes(spanHeader)[
+                               ..(Unsafe.SizeOf<OuterHeader>() - Unsafe.SizeOf<Hash128>())]) ==
+                       HeaderHash;
             }
         }
 
-        [StructLayout(LayoutKind.Sequential, Pack = 1/*, Size = 40*/)]
-        private record struct FeatureInfo(ulong FeatureInfo0, ulong FeatureInfo1, ulong FeatureInfo2, ulong FeatureInfo3, ulong FeatureInfo4);
+        [StructLayout(LayoutKind.Sequential, Pack = 1 /*, Size = 40*/)]
+        private record struct FeatureInfo(
+            ulong FeatureInfo0,
+            ulong FeatureInfo1,
+            ulong FeatureInfo2,
+            ulong FeatureInfo3,
+            ulong FeatureInfo4);
 
-        [StructLayout(LayoutKind.Sequential, Pack = 1/*, Size = 128*/)]
+        [StructLayout(LayoutKind.Sequential, Pack = 1 /*, Size = 128*/)]
         private struct InnerHeader
         {
             public ulong Magic;
@@ -1075,18 +1107,23 @@ namespace ARMeilleure.Translation.PTC
             {
                 Span<InnerHeader> spanHeader = MemoryMarshal.CreateSpan(ref this, 1);
 
-                HeaderHash = Hash128.ComputeHash(MemoryMarshal.AsBytes(spanHeader)[..(Unsafe.SizeOf<InnerHeader>() - Unsafe.SizeOf<Hash128>())]);
+                HeaderHash =
+                    Hash128.ComputeHash(
+                        MemoryMarshal.AsBytes(spanHeader)[..(Unsafe.SizeOf<InnerHeader>() - Unsafe.SizeOf<Hash128>())]);
             }
 
             public bool IsHeaderValid()
             {
                 Span<InnerHeader> spanHeader = MemoryMarshal.CreateSpan(ref this, 1);
 
-                return Hash128.ComputeHash(MemoryMarshal.AsBytes(spanHeader)[..(Unsafe.SizeOf<InnerHeader>() - Unsafe.SizeOf<Hash128>())]) == HeaderHash;
+                return Hash128.ComputeHash(
+                           MemoryMarshal.AsBytes(spanHeader)[
+                               ..(Unsafe.SizeOf<InnerHeader>() - Unsafe.SizeOf<Hash128>())]) ==
+                       HeaderHash;
             }
         }
 
-        [StructLayout(LayoutKind.Sequential, Pack = 1/*, Size = 42*/)]
+        [StructLayout(LayoutKind.Sequential, Pack = 1 /*, Size = 42*/)]
         private struct InfoEntry
         {
             public ulong Address;

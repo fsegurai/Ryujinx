@@ -22,33 +22,13 @@ namespace ARMeilleure.Translation
 {
     public class Translator
     {
-        private static readonly AddressTable<ulong>.Level[] _levels64Bit =
-            new AddressTable<ulong>.Level[]
-            {
-                new(31, 17),
-                new(23,  8),
-                new(15,  8),
-                new( 7,  8),
-                new( 2,  5),
-            };
-
-        private static readonly AddressTable<ulong>.Level[] _levels32Bit =
-            new AddressTable<ulong>.Level[]
-            {
-                new(31, 17),
-                new(23,  8),
-                new(15,  8),
-                new( 7,  8),
-                new( 1,  6),
-            };
-
         private readonly IJitMemoryAllocator _allocator;
         private readonly ConcurrentQueue<KeyValuePair<ulong, TranslatedFunction>> _oldFuncs;
 
         private readonly Ptc _ptc;
 
         internal TranslatorCache<TranslatedFunction> Functions { get; }
-        internal AddressTable<ulong> FunctionTable { get; }
+        internal IAddressTable<ulong> FunctionTable { get; }
         internal EntryTable<uint> CountTable { get; }
         internal TranslatorStubs Stubs { get; }
         internal TranslatorQueue Queue { get; }
@@ -57,7 +37,7 @@ namespace ARMeilleure.Translation
         private Thread[] _backgroundTranslationThreads;
         private volatile int _threadCount;
 
-        public Translator(IJitMemoryAllocator allocator, IMemoryManager memory, bool for64Bits)
+        public Translator(IJitMemoryAllocator allocator, IMemoryManager memory, IAddressTable<ulong> functionTable)
         {
             _allocator = allocator;
             Memory = memory;
@@ -72,15 +52,16 @@ namespace ARMeilleure.Translation
 
             CountTable = new EntryTable<uint>();
             Functions = new TranslatorCache<TranslatedFunction>();
-            FunctionTable = new AddressTable<ulong>(for64Bits ? _levels64Bit : _levels32Bit);
+            FunctionTable = functionTable;
             Stubs = new TranslatorStubs(FunctionTable);
 
             FunctionTable.Fill = (ulong)Stubs.SlowDispatchStub;
         }
 
-        public IPtcLoadState LoadDiskCache(string titleIdText, string displayVersion, bool enabled)
+        public IPtcLoadState LoadDiskCache(string titleIdText, string displayVersion, bool enabled,
+            string cacheSelector)
         {
-            _ptc.Initialize(titleIdText, displayVersion, enabled, Memory.Type);
+            _ptc.Initialize(titleIdText, displayVersion, enabled, Memory.Type, cacheSelector);
             return _ptc;
         }
 
@@ -149,8 +130,7 @@ namespace ARMeilleure.Translation
                 do
                 {
                     address = ExecuteSingle(context, address);
-                }
-                while (context.Running && address != 0);
+                } while (context.Running && address != 0);
             }
 
             NativeInterface.UnregisterThread();
@@ -254,7 +234,8 @@ namespace ARMeilleure.Translation
 
             Logger.StartPass(PassName.Decoding);
 
-            Block[] blocks = Decoder.Decode(Memory, address, mode, highCq, singleStep ? DecoderMode.SingleInstruction : DecoderMode.MultipleBlocks);
+            Block[] blocks = Decoder.Decode(Memory, address, mode, highCq,
+                singleStep ? DecoderMode.SingleInstruction : DecoderMode.MultipleBlocks);
 
             Logger.EndPass(PassName.Decoding);
 
@@ -289,7 +270,8 @@ namespace ARMeilleure.Translation
                 options |= CompilerOptions.Relocatable;
             }
 
-            CompiledFunction compiledFunc = Compiler.Compile(cfg, argTypes, retType, options, RuntimeInformation.ProcessArchitecture);
+            CompiledFunction compiledFunc =
+                Compiler.Compile(cfg, argTypes, retType, options, RuntimeInformation.ProcessArchitecture);
 
             if (context.HasPtc && !singleStep)
             {
@@ -414,7 +396,8 @@ namespace ARMeilleure.Translation
                         {
                             lblPredicateSkip = Label();
 
-                            InstEmitFlowHelper.EmitCondBranch(context, lblPredicateSkip, context.CurrentIfThenBlockCond.Invert());
+                            InstEmitFlowHelper.EmitCondBranch(context, lblPredicateSkip,
+                                context.CurrentIfThenBlockCond.Invert());
                         }
 
                         if (opCode is OpCode32 op && op.Cond < Condition.Al)
@@ -459,16 +442,16 @@ namespace ARMeilleure.Translation
 
             Operand lblEnd = Label();
 
-            Operand address = !context.HasPtc ?
-                Const(ref counter.Value) :
-                Const(ref counter.Value, Ptc.CountTableSymbol);
+            Operand address =
+                !context.HasPtc ? Const(ref counter.Value) : Const(ref counter.Value, Ptc.CountTableSymbol);
 
             Operand curCount = context.Load(OperandType.I32, address);
             Operand count = context.Add(curCount, Const(1));
             context.Store(address, count);
             context.BranchIf(lblEnd, curCount, Const(MinsCallForRejit), Comparison.NotEqual, BasicBlockFrequency.Cold);
 
-            context.Call(typeof(NativeInterface).GetMethod(nameof(NativeInterface.EnqueueForRejit)), Const(context.EntryAddress));
+            context.Call(typeof(NativeInterface).GetMethod(nameof(NativeInterface.EnqueueForRejit)),
+                Const(context.EntryAddress));
 
             context.MarkLabel(lblEnd);
         }
@@ -484,7 +467,8 @@ namespace ARMeilleure.Translation
             Operand count = context.Load(OperandType.I32, countAddr);
             context.BranchIfTrue(lblNonZero, count, BasicBlockFrequency.Cold);
 
-            Operand running = context.Call(typeof(NativeInterface).GetMethod(nameof(NativeInterface.CheckSynchronization)));
+            Operand running =
+                context.Call(typeof(NativeInterface).GetMethod(nameof(NativeInterface.CheckSynchronization)));
             context.BranchIfTrue(lblExit, running, BasicBlockFrequency.Cold);
 
             context.Return(Const(0L));

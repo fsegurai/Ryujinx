@@ -43,7 +43,8 @@ namespace Ryujinx.HLE.HOS
             _codeSize = codeSize;
         }
 
-        public IProcessContext Create(KernelContext context, ulong pid, ulong addressSpaceSize, InvalidAccessHandler invalidAccessHandler, bool for64Bit)
+        public IProcessContext Create(KernelContext context, ulong pid, ulong addressSpaceSize,
+            InvalidAccessHandler invalidAccessHandler, bool for64Bit)
         {
             IArmProcessContext processContext;
 
@@ -53,7 +54,8 @@ namespace Ryujinx.HLE.HOS
             {
                 var cpuEngine = new HvEngine(_tickSource);
                 var memoryManager = new HvMemoryManager(context.Memory, addressSpaceSize, invalidAccessHandler);
-                processContext = new ArmProcessContext<HvMemoryManager>(pid, cpuEngine, _gpu, memoryManager, addressSpaceSize, for64Bit);
+                processContext = new ArmProcessContext<HvMemoryManager>(pid, cpuEngine, _gpu, memoryManager,
+                    addressSpaceSize, for64Bit);
             }
             else
             {
@@ -61,23 +63,27 @@ namespace Ryujinx.HLE.HOS
 
                 if (!MemoryBlock.SupportsFlags(MemoryAllocationFlags.ViewCompatible))
                 {
-                    Logger.Warning?.Print(LogClass.Cpu, "Host system doesn't support views, falling back to software page table");
+                    Logger.Warning?.Print(LogClass.Cpu,
+                        "Host system doesn't support views, falling back to software page table");
 
                     mode = MemoryManagerMode.SoftwarePageTable;
                 }
 
-                ICpuEngine cpuEngine = isArm64Host && (mode == MemoryManagerMode.HostMapped || mode == MemoryManagerMode.HostMappedUnsafe)
-                    ? new LightningJitEngine(_tickSource)
-                    : new JitEngine(_tickSource);
+                ICpuEngine cpuEngine =
+                    isArm64Host && (mode == MemoryManagerMode.HostMapped || mode == MemoryManagerMode.HostMappedUnsafe)
+                        ? new LightningJitEngine(_tickSource)
+                        : new JitEngine(_tickSource);
 
                 AddressSpace addressSpace = null;
 
                 // We want to use host tracked mode if the host page size is > 4KB.
-                if ((mode == MemoryManagerMode.HostMapped || mode == MemoryManagerMode.HostMappedUnsafe) && MemoryBlock.GetPageSize() <= 0x1000)
+                if ((mode == MemoryManagerMode.HostMapped || mode == MemoryManagerMode.HostMappedUnsafe) &&
+                    MemoryBlock.GetPageSize() <= 0x1000)
                 {
                     if (!AddressSpace.TryCreate(context.Memory, addressSpaceSize, out addressSpace))
                     {
-                        Logger.Warning?.Print(LogClass.Cpu, "Address space creation failed, falling back to software page table");
+                        Logger.Warning?.Print(LogClass.Cpu,
+                            "Address space creation failed, falling back to software page table");
 
                         mode = MemoryManagerMode.SoftwarePageTable;
                     }
@@ -87,26 +93,33 @@ namespace Ryujinx.HLE.HOS
                 {
                     case MemoryManagerMode.SoftwarePageTable:
                         var memoryManager = new MemoryManager(context.Memory, addressSpaceSize, invalidAccessHandler);
-                        processContext = new ArmProcessContext<MemoryManager>(pid, cpuEngine, _gpu, memoryManager, addressSpaceSize, for64Bit);
+                        processContext = new ArmProcessContext<MemoryManager>(pid, cpuEngine, _gpu, memoryManager,
+                            addressSpaceSize, for64Bit);
                         break;
 
                     case MemoryManagerMode.HostMapped:
                     case MemoryManagerMode.HostMappedUnsafe:
                         if (addressSpace == null)
                         {
-                            var memoryManagerHostTracked = new MemoryManagerHostTracked(context.Memory, addressSpaceSize, mode == MemoryManagerMode.HostMappedUnsafe, invalidAccessHandler);
-                            processContext = new ArmProcessContext<MemoryManagerHostTracked>(pid, cpuEngine, _gpu, memoryManagerHostTracked, addressSpaceSize, for64Bit);
+                            var memoryManagerHostTracked = new MemoryManagerHostTracked(context.Memory,
+                                addressSpaceSize, mode == MemoryManagerMode.HostMappedUnsafe, invalidAccessHandler);
+                            processContext = new ArmProcessContext<MemoryManagerHostTracked>(pid, cpuEngine, _gpu,
+                                memoryManagerHostTracked, addressSpaceSize, for64Bit);
                         }
                         else
                         {
                             if (addressSpaceSize != addressSpace.AddressSpaceSize)
                             {
-                                Logger.Warning?.Print(LogClass.Emulation, $"Allocated address space (0x{addressSpace.AddressSpaceSize:X}) is smaller than guest application requirements (0x{addressSpaceSize:X})");
+                                Logger.Warning?.Print(LogClass.Emulation,
+                                    $"Allocated address space (0x{addressSpace.AddressSpaceSize:X}) is smaller than guest application requirements (0x{addressSpaceSize:X})");
                             }
 
-                            var memoryManagerHostMapped = new MemoryManagerHostMapped(addressSpace, mode == MemoryManagerMode.HostMappedUnsafe, invalidAccessHandler);
-                            processContext = new ArmProcessContext<MemoryManagerHostMapped>(pid, cpuEngine, _gpu, memoryManagerHostMapped, addressSpace.AddressSpaceSize, for64Bit);
+                            var memoryManagerHostMapped = new MemoryManagerHostMapped(addressSpace,
+                                mode == MemoryManagerMode.HostMappedUnsafe, invalidAccessHandler);
+                            processContext = new ArmProcessContext<MemoryManagerHostMapped>(pid, cpuEngine, _gpu,
+                                memoryManagerHostMapped, addressSpace.AddressSpaceSize, for64Bit);
                         }
+
                         break;
 
                     default:
@@ -114,7 +127,8 @@ namespace Ryujinx.HLE.HOS
                 }
             }
 
-            DiskCacheLoadState = processContext.Initialize(_titleIdText, _displayVersion, _diskCacheEnabled, _codeAddress, _codeSize);
+            DiskCacheLoadState = processContext.Initialize(_titleIdText, _displayVersion, _diskCacheEnabled,
+                _codeAddress, _codeSize, "default"); //Ready for exefs profiles
 
             return processContext;
         }

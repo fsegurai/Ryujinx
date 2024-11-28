@@ -8,7 +8,7 @@ namespace ARMeilleure.Signal
 {
     public static class NativeSignalHandlerGenerator
     {
-        public const int MaxTrackedRanges = 8;
+        public const int MaxTrackedRanges = 16;
 
         private const int StructAddressOffset = 0;
         private const int StructWriteOffset = 4;
@@ -21,7 +21,8 @@ namespace ARMeilleure.Signal
 
         private const uint EXCEPTION_ACCESS_VIOLATION = 0xc0000005;
 
-        private static Operand EmitGenericRegionCheck(EmitterContext context, nint signalStructPtr, Operand faultAddress, Operand isWrite, int rangeStructSize)
+        private static Operand EmitGenericRegionCheck(EmitterContext context, nint signalStructPtr,
+            Operand faultAddress, Operand isWrite, int rangeStructSize)
         {
             Operand inRegionLocal = context.AllocateLocal(OperandType.I32);
             context.Copy(inRegionLocal, Const(0));
@@ -38,8 +39,10 @@ namespace ARMeilleure.Signal
 
                 context.BranchIfFalse(nextLabel, isActive);
 
-                Operand rangeAddress = context.Load(OperandType.I64, Const((ulong)signalStructPtr + rangeBaseOffset + 4));
-                Operand rangeEndAddress = context.Load(OperandType.I64, Const((ulong)signalStructPtr + rangeBaseOffset + 12));
+                Operand rangeAddress =
+                    context.Load(OperandType.I64, Const((ulong)signalStructPtr + rangeBaseOffset + 4));
+                Operand rangeEndAddress =
+                    context.Load(OperandType.I64, Const((ulong)signalStructPtr + rangeBaseOffset + 12));
 
                 // Is the fault address within this tracked region?
                 Operand inRange = context.BitwiseAnd(
@@ -52,7 +55,8 @@ namespace ARMeilleure.Signal
                 Operand offset = context.Subtract(faultAddress, rangeAddress);
 
                 // Call the tracking action, with the pointer's relative offset to the base address.
-                Operand trackingActionPtr = context.Load(OperandType.I64, Const((ulong)signalStructPtr + rangeBaseOffset + 20));
+                Operand trackingActionPtr =
+                    context.Load(OperandType.I64, Const((ulong)signalStructPtr + rangeBaseOffset + 20));
 
                 context.Copy(inRegionLocal, Const(0));
 
@@ -168,14 +172,16 @@ namespace ARMeilleure.Signal
 
             Operand isWrite = context.ICompareNotEqual(writeFlag, Const(0L)); // Normalize to 0/1.
 
-            Operand isInRegion = EmitGenericRegionCheck(context, signalStructPtr, faultAddress, isWrite, rangeStructSize);
+            Operand isInRegion =
+                EmitGenericRegionCheck(context, signalStructPtr, faultAddress, isWrite, rangeStructSize);
 
             Operand endLabel = Label();
 
             context.BranchIfTrue(endLabel, isInRegion);
 
             Operand unixOldSigaction = context.Load(OperandType.I64, Const((ulong)signalStructPtr + UnixOldSigaction));
-            Operand unixOldSigaction3Arg = context.Load(OperandType.I64, Const((ulong)signalStructPtr + UnixOldSigaction3Arg));
+            Operand unixOldSigaction3Arg =
+                context.Load(OperandType.I64, Const((ulong)signalStructPtr + UnixOldSigaction3Arg));
             Operand threeArgLabel = Label();
 
             context.BranchIfTrue(threeArgLabel, unixOldSigaction3Arg);
@@ -190,7 +196,7 @@ namespace ARMeilleure.Signal
                 context.LoadArgument(OperandType.I32, 0),
                 sigInfoPtr,
                 context.LoadArgument(OperandType.I64, 2)
-                );
+            );
 
             context.MarkLabel(endLabel);
 
@@ -200,7 +206,8 @@ namespace ARMeilleure.Signal
 
             OperandType[] argTypes = new OperandType[] { OperandType.I32, OperandType.I64, OperandType.I64 };
 
-            return Compiler.Compile(cfg, argTypes, OperandType.None, CompilerOptions.HighCq, RuntimeInformation.ProcessArchitecture).Code;
+            return Compiler.Compile(cfg, argTypes, OperandType.None, CompilerOptions.HighCq,
+                RuntimeInformation.ProcessArchitecture).Code;
         }
 
         public static byte[] GenerateWindowsSignalHandler(nint signalStructPtr, int rangeStructSize)
@@ -224,15 +231,20 @@ namespace ARMeilleure.Signal
 
             // Next, read the address of the invalid access, and whether it is a write or not.
 
-            Operand structAddressOffset = context.Load(OperandType.I32, Const((ulong)signalStructPtr + StructAddressOffset));
-            Operand structWriteOffset = context.Load(OperandType.I32, Const((ulong)signalStructPtr + StructWriteOffset));
+            Operand structAddressOffset =
+                context.Load(OperandType.I32, Const((ulong)signalStructPtr + StructAddressOffset));
+            Operand structWriteOffset =
+                context.Load(OperandType.I32, Const((ulong)signalStructPtr + StructWriteOffset));
 
-            Operand faultAddress = context.Load(OperandType.I64, context.Add(exceptionRecordPtr, context.ZeroExtend32(OperandType.I64, structAddressOffset)));
-            Operand writeFlag = context.Load(OperandType.I64, context.Add(exceptionRecordPtr, context.ZeroExtend32(OperandType.I64, structWriteOffset)));
+            Operand faultAddress = context.Load(OperandType.I64,
+                context.Add(exceptionRecordPtr, context.ZeroExtend32(OperandType.I64, structAddressOffset)));
+            Operand writeFlag = context.Load(OperandType.I64,
+                context.Add(exceptionRecordPtr, context.ZeroExtend32(OperandType.I64, structWriteOffset)));
 
             Operand isWrite = context.ICompareNotEqual(writeFlag, Const(0L)); // Normalize to 0/1.
 
-            Operand isInRegion = EmitGenericRegionCheck(context, signalStructPtr, faultAddress, isWrite, rangeStructSize);
+            Operand isInRegion =
+                EmitGenericRegionCheck(context, signalStructPtr, faultAddress, isWrite, rangeStructSize);
 
             Operand endLabel = Label();
 
@@ -254,10 +266,12 @@ namespace ARMeilleure.Signal
 
             OperandType[] argTypes = new OperandType[] { OperandType.I64 };
 
-            return Compiler.Compile(cfg, argTypes, OperandType.I32, CompilerOptions.HighCq, RuntimeInformation.ProcessArchitecture).Code;
+            return Compiler.Compile(cfg, argTypes, OperandType.I32, CompilerOptions.HighCq,
+                RuntimeInformation.ProcessArchitecture).Code;
         }
 
-        private static void GenerateFaultAddressPatchCode(EmitterContext context, Operand faultAddress, Operand newAddress)
+        private static void GenerateFaultAddressPatchCode(EmitterContext context, Operand faultAddress,
+            Operand newAddress)
         {
             if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
             {
@@ -288,7 +302,8 @@ namespace ARMeilleure.Signal
 
                     Operand reg = GetAddressRegisterFromArm64Instruction(context, pc);
                     Operand reg64 = context.ZeroExtend32(OperandType.I64, reg);
-                    Operand regCtxAddress = context.Add(ucontextPtr, context.Add(context.ShiftLeft(reg64, Const(3)), Const(baseRegsOffset)));
+                    Operand regCtxAddress = context.Add(ucontextPtr,
+                        context.Add(context.ShiftLeft(reg64, Const(3)), Const(baseRegsOffset)));
                     Operand regAddress = context.Load(OperandType.I64, regCtxAddress);
 
                     Operand addressDelta = context.Subtract(regAddress, faultAddress);

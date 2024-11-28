@@ -19,7 +19,7 @@ namespace ARMeilleure.Translation
 
         private bool _disposed;
 
-        private readonly AddressTable<ulong> _functionTable;
+        private readonly IAddressTable<ulong> _functionTable;
         private readonly Lazy<nint> _dispatchStub;
         private readonly Lazy<DispatcherFunction> _dispatchLoop;
         private readonly Lazy<WrapperFunction> _contextWrapper;
@@ -86,7 +86,7 @@ namespace ARMeilleure.Translation
         /// </summary>
         /// <param name="functionTable">Function table used to store pointers to the functions that the guest code will call</param>
         /// <exception cref="ArgumentNullException"><paramref name="translator"/> is null</exception>
-        public TranslatorStubs(AddressTable<ulong> functionTable)
+        public TranslatorStubs(IAddressTable<ulong> functionTable)
         {
             ArgumentNullException.ThrowIfNull(functionTable);
 
@@ -182,14 +182,17 @@ namespace ARMeilleure.Translation
             context.Tailcall(hostAddress, nativeContext);
 
             context.MarkLabel(lblFallback);
-            hostAddress = context.Call(typeof(NativeInterface).GetMethod(nameof(NativeInterface.GetFunctionAddress)), guestAddress);
+            hostAddress = context.Call(typeof(NativeInterface).GetMethod(nameof(NativeInterface.GetFunctionAddress)),
+                guestAddress);
             context.Tailcall(hostAddress, nativeContext);
 
             var cfg = context.GetControlFlowGraph();
             var retType = OperandType.I64;
             var argTypes = new[] { OperandType.I64 };
 
-            var func = Compiler.Compile(cfg, argTypes, retType, CompilerOptions.HighCq, RuntimeInformation.ProcessArchitecture).Map<GuestFunction>();
+            var func = Compiler
+                .Compile(cfg, argTypes, retType, CompilerOptions.HighCq, RuntimeInformation.ProcessArchitecture)
+                .Map<GuestFunction>();
 
             return Marshal.GetFunctionPointerForDelegate(func);
         }
@@ -207,14 +210,18 @@ namespace ARMeilleure.Translation
             Operand guestAddress = context.Load(OperandType.I64,
                 context.Add(nativeContext, Const((ulong)NativeContext.GetDispatchAddressOffset())));
 
-            Operand hostAddress = context.Call(typeof(NativeInterface).GetMethod(nameof(NativeInterface.GetFunctionAddress)), guestAddress);
+            Operand hostAddress =
+                context.Call(typeof(NativeInterface).GetMethod(nameof(NativeInterface.GetFunctionAddress)),
+                    guestAddress);
             context.Tailcall(hostAddress, nativeContext);
 
             var cfg = context.GetControlFlowGraph();
             var retType = OperandType.I64;
             var argTypes = new[] { OperandType.I64 };
 
-            var func = Compiler.Compile(cfg, argTypes, retType, CompilerOptions.HighCq, RuntimeInformation.ProcessArchitecture).Map<GuestFunction>();
+            var func = Compiler
+                .Compile(cfg, argTypes, retType, CompilerOptions.HighCq, RuntimeInformation.ProcessArchitecture)
+                .Map<GuestFunction>();
 
             return Marshal.GetFunctionPointerForDelegate(func);
         }
@@ -231,7 +238,8 @@ namespace ARMeilleure.Translation
             {
                 InstEmitSimdHelper.EnterArmFpMode(context, (flag) =>
                 {
-                    Operand flagAddress = context.Add(nativeContext, Const((ulong)NativeContext.GetRegisterOffset(new Register((int)flag, RegisterType.FpFlag))));
+                    Operand flagAddress = context.Add(nativeContext,
+                        Const((ulong)NativeContext.GetRegisterOffset(new Register((int)flag, RegisterType.FpFlag))));
                     return context.Load(OperandType.I32, flagAddress);
                 });
             }
@@ -239,7 +247,8 @@ namespace ARMeilleure.Translation
             {
                 InstEmitSimdHelper.ExitArmFpMode(context, (flag, value) =>
                 {
-                    Operand flagAddress = context.Add(nativeContext, Const((ulong)NativeContext.GetRegisterOffset(new Register((int)flag, RegisterType.FpFlag))));
+                    Operand flagAddress = context.Add(nativeContext,
+                        Const((ulong)NativeContext.GetRegisterOffset(new Register((int)flag, RegisterType.FpFlag))));
                     context.Store(flagAddress, value);
                 });
             }
@@ -262,7 +271,8 @@ namespace ARMeilleure.Translation
                 context.LoadArgument(OperandType.I64, 1));
 
             Operand runningAddress = context.Add(nativeContext, Const((ulong)NativeContext.GetRunningOffset()));
-            Operand dispatchAddress = context.Add(nativeContext, Const((ulong)NativeContext.GetDispatchAddressOffset()));
+            Operand dispatchAddress =
+                context.Add(nativeContext, Const((ulong)NativeContext.GetDispatchAddressOffset()));
 
             EmitSyncFpContext(context, nativeContext, true);
 
@@ -283,7 +293,9 @@ namespace ARMeilleure.Translation
             var retType = OperandType.None;
             var argTypes = new[] { OperandType.I64, OperandType.I64 };
 
-            return Compiler.Compile(cfg, argTypes, retType, CompilerOptions.HighCq, RuntimeInformation.ProcessArchitecture).Map<DispatcherFunction>();
+            return Compiler
+                .Compile(cfg, argTypes, retType, CompilerOptions.HighCq, RuntimeInformation.ProcessArchitecture)
+                .Map<DispatcherFunction>();
         }
 
         /// <summary>
@@ -307,7 +319,9 @@ namespace ARMeilleure.Translation
             var retType = OperandType.I64;
             var argTypes = new[] { OperandType.I64, OperandType.I64 };
 
-            return Compiler.Compile(cfg, argTypes, retType, CompilerOptions.HighCq, RuntimeInformation.ProcessArchitecture).Map<WrapperFunction>();
+            return Compiler
+                .Compile(cfg, argTypes, retType, CompilerOptions.HighCq, RuntimeInformation.ProcessArchitecture)
+                .Map<WrapperFunction>();
         }
     }
 }

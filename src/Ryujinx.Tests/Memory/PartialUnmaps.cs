@@ -1,3 +1,5 @@
+using ARMeilleure.Common;
+using ARMeilleure.Memory;
 using ARMeilleure.Signal;
 using ARMeilleure.Translation;
 using NUnit.Framework;
@@ -20,7 +22,8 @@ namespace Ryujinx.Tests.Memory
     {
         private static Translator _translator;
 
-        private static (MemoryBlock virt, MemoryBlock mirror, MemoryEhMeilleure exceptionHandler) GetVirtual(ulong asSize)
+        private static (MemoryBlock virt, MemoryBlock mirror, MemoryEhMeilleure exceptionHandler) GetVirtual(
+            ulong asSize)
         {
             MemoryAllocationFlags asFlags = MemoryAllocationFlags.Reserve | MemoryAllocationFlags.ViewCompatible;
 
@@ -53,7 +56,10 @@ namespace Ryujinx.Tests.Memory
         private static void EnsureTranslator()
         {
             // Create a translator, as one is needed to register the signal handler or emit methods.
-            _translator ??= new Translator(new JitMemoryAllocator(), new MockMemoryManager(), true);
+            _translator ??= new Translator(
+                new JitMemoryAllocator(),
+                new MockMemoryManager(),
+                AddressTable<ulong>.CreateForArm(true, MemoryManagerType.SoftwarePageTable));
         }
 
         [Test]
@@ -68,7 +74,8 @@ namespace Ryujinx.Tests.Memory
             // The first 0x100000 is mapped to start. It is replaced from the center with the 0x200000 mapping.
             var backing = new MemoryBlock(vaSize * 2, MemoryAllocationFlags.Mirrorable);
 
-            (MemoryBlock unusedMainMemory, MemoryBlock memory, MemoryEhMeilleure exceptionHandler) = GetVirtual(vaSize * 2);
+            (MemoryBlock unusedMainMemory, MemoryBlock memory, MemoryEhMeilleure exceptionHandler) =
+                GetVirtual(vaSize * 2);
 
             EnsureTranslator();
 
@@ -181,11 +188,11 @@ namespace Ryujinx.Tests.Memory
                 }
 
                 /*
-                * Use this to test invalid access. Can't put this in the test suite unfortunately as invalid access crashes the test process.
-                * memory.Reprotect(vaSize - 0x1000, 0x1000, MemoryPermission.None);
-                * //memory.UnmapView(backing, vaSize - 0x1000, 0x1000);
-                * memory.Read<int>(vaSize - 0x1000);
-                */
+                 * Use this to test invalid access. Can't put this in the test suite unfortunately as invalid access crashes the test process.
+                 * memory.Reprotect(vaSize - 0x1000, 0x1000, MemoryPermission.None);
+                 * //memory.UnmapView(backing, vaSize - 0x1000, 0x1000);
+                 * memory.Read<int>(vaSize - 0x1000);
+                 */
             }
             finally
             {
@@ -205,7 +212,6 @@ namespace Ryujinx.Tests.Memory
         [Platform(Exclude = "MacOsX")]
         public unsafe void PartialUnmapNative()
         {
-
             // Set up an address space to test partial unmapping.
             // Should register the signal handler to deal with this on Windows.
             ulong vaSize = 0x100000;
@@ -213,7 +219,8 @@ namespace Ryujinx.Tests.Memory
             // The first 0x100000 is mapped to start. It is replaced from the center with the 0x200000 mapping.
             var backing = new MemoryBlock(vaSize * 2, MemoryAllocationFlags.Mirrorable);
 
-            (MemoryBlock mainMemory, MemoryBlock unusedMirror, MemoryEhMeilleure exceptionHandler) = GetVirtual(vaSize * 2);
+            (MemoryBlock mainMemory, MemoryBlock unusedMirror, MemoryEhMeilleure exceptionHandler) =
+                GetVirtual(vaSize * 2);
 
             EnsureTranslator();
 
