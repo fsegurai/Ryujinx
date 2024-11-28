@@ -1,6 +1,7 @@
 {
   "Language": "Українська",
   "MenuBarFileOpenApplet": "Відкрити аплет",
+  "MenuBarFileOpenAppletOpenMiiApplet": "Відкрити аплет Mii",
   "MenuBarFileOpenAppletOpenMiiAppletToolTip": "Відкрити аплет Mii Editor в автономному режимі",
   "SettingsTabInputDirectMouseAccess": "Прямий доступ мишею",
   "SettingsTabSystemMemoryManagerMode": "Режим диспетчера пам’яті:",

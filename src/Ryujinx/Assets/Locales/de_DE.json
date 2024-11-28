@@ -1,6 +1,7 @@
 {
   "Language": "Deutsch",
   "MenuBarFileOpenApplet": "Öffne Anwendung",
+  "MenuBarFileOpenAppletOpenMiiApplet": "Öffne Mii-Editor",
   "MenuBarFileOpenAppletOpenMiiAppletToolTip": "Öffnet das Mii-Editor-Applet im Standalone-Modus",
   "SettingsTabInputDirectMouseAccess": "Direkter Mauszugriff",
   "SettingsTabSystemMemoryManagerMode": "Speichermanagermodus:",
@@ -451,7 +452,7 @@
   "DialogUpdaterRenamingMessage": "Update wird umbenannt...",
   "DialogUpdaterAddingFilesMessage": "Update wird hinzugefügt...",
   "DialogUpdaterShowChangelogMessage": "Changelog anzeigen",
-  "DialogUpdaterCompleteMessage",: "Update abgeschlossen!",
+  "DialogUpdaterCompleteMessage": "Update abgeschlossen!",
   "DialogUpdaterRestartMessage": "Ryujinx jetzt neu starten?",
   "DialogUpdaterNoInternetMessage": "Es besteht keine Verbindung mit dem Internet!",
   "DialogUpdaterNoInternetSubMessage": "Bitte vergewissern, dass eine funktionierende Internetverbindung existiert!",

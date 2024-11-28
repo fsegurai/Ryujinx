@@ -1,6 +1,7 @@
 {
   "Language": "한국어",
   "MenuBarFileOpenApplet": "애플릿 열기",
+  "MenuBarFileOpenAppletOpenMiiApplet": "Mii 편집기 애플릿 열기",
   "MenuBarFileOpenAppletOpenMiiAppletToolTip": "독립 실행형 모드로 Mii 편집기 애플릿 열기",
   "SettingsTabInputDirectMouseAccess": "다이렉트 마우스 접근",
   "SettingsTabSystemMemoryManagerMode": "메모리 관리자 모드:",
