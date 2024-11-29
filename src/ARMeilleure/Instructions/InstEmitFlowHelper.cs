@@ -4,7 +4,6 @@ using ARMeilleure.IntermediateRepresentation;
 using ARMeilleure.State;
 using ARMeilleure.Translation;
 using ARMeilleure.Translation.PTC;
-
 using static ARMeilleure.Instructions.InstEmitHelper;
 using static ARMeilleure.IntermediateRepresentation.Operand.Factory;
 
@@ -188,26 +187,48 @@ namespace ARMeilleure.Instructions
             // Store the target guest address into the native context. The stubs uses this address to dispatch into the
             // next translation.
             Operand nativeContext = context.LoadArgument(OperandType.I64, 0);
-            Operand dispAddressAddr = context.Add(nativeContext, Const((ulong)NativeContext.GetDispatchAddressOffset()));
+            Operand dispAddressAddr =
+                context.Add(nativeContext, Const((ulong)NativeContext.GetDispatchAddressOffset()));
             context.Store(dispAddressAddr, guestAddress);
 
             Operand hostAddress;
 
-            // If address is mapped onto the function table, we can skip the table walk. Otherwise we fallback
+            var table = context.FunctionTable;
+
+            // If address is mapped onto the function table, we can skip the table walk. Otherwise, we fall back
             // onto the dispatch stub.
             if (guestAddress.Kind == OperandKind.Constant && context.FunctionTable.IsValid(guestAddress.Value))
             {
-                Operand hostAddressAddr = !context.HasPtc ?
-                    Const(ref context.FunctionTable.GetValue(guestAddress.Value)) :
-                    Const(ref context.FunctionTable.GetValue(guestAddress.Value), new Symbol(SymbolType.FunctionTable, guestAddress.Value));
+                Operand hostAddressAddr = !context.HasPtc
+                    ? Const(ref context.FunctionTable.GetValue(guestAddress.Value))
+                    : Const(ref context.FunctionTable.GetValue(guestAddress.Value),
+                        new Symbol(SymbolType.FunctionTable, guestAddress.Value));
 
                 hostAddress = context.Load(OperandType.I64, hostAddressAddr);
             }
+            else if (table.Sparse)
+            {
+                // Inline table lookup. Only enabled when the sparse function table is enabled with 2 levels.
+                // Deliberately attempts to avoid branches.
+                Operand tableBase = !context.HasPtc ? Const(table.Base) : Const(table.Base, Ptc.FunctionTableSymbol);
+                hostAddress = tableBase;
+                for (int i = 0; i < table.Levels.Length; i++)
+                {
+                    var level = table.Levels[i];
+                    int clearBits = 64 - (level.Index + level.Length);
+                    Operand index = context.ShiftLeft(
+                        context.ShiftRightUI(context.ShiftLeft(guestAddress, Const(clearBits)),
+                            Const(clearBits + level.Index)),
+                        Const(3)
+                    );
+                    hostAddress = context.Load(OperandType.I64, context.Add(hostAddress, index));
+                }
+            }
             else
             {
-                hostAddress = !context.HasPtc ?
-                    Const((long)context.Stubs.DispatchStub) :
-                    Const((long)context.Stubs.DispatchStub, Ptc.DispatchStubSymbol);
+                hostAddress = !context.HasPtc
+                    ? Const((long)context.Stubs.DispatchStub)
+                    : Const((long)context.Stubs.DispatchStub, Ptc.DispatchStubSymbol);
             }
 
             if (isJump)

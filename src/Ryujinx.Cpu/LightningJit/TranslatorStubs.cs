@@ -23,7 +23,7 @@ namespace Ryujinx.Cpu.LightningJit
 
         private bool _disposed;
 
-        private readonly AddressTable<ulong> _functionTable;
+        private readonly IAddressTable<ulong> _functionTable;
         private readonly NoWxCache _noWxCache;
         private readonly GetFunctionAddressDelegate _getFunctionAddressRef;
         private readonly nint _getFunctionAddress;
@@ -79,7 +79,7 @@ namespace Ryujinx.Cpu.LightningJit
         /// <param name="functionTable">Function table used to store pointers to the functions that the guest code will call</param>
         /// <param name="noWxCache">Cache used on platforms that enforce W^X, otherwise should be null</param>
         /// <exception cref="ArgumentNullException"><paramref name="translator"/> is null</exception>
-        public TranslatorStubs(AddressTable<ulong> functionTable, NoWxCache noWxCache)
+        public TranslatorStubs(IAddressTable<ulong> functionTable, NoWxCache noWxCache)
         {
             ArgumentNullException.ThrowIfNull(functionTable);
 
@@ -199,7 +199,8 @@ namespace Ryujinx.Cpu.LightningJit
                 {
                     uint branchInst = writer.ReadInstructionAt(branchOffset);
                     Debug.Assert(writer.InstructionPointer > branchOffset);
-                    writer.WriteInstructionAt(branchOffset, branchInst | ((uint)(writer.InstructionPointer - branchOffset) << 5));
+                    writer.WriteInstructionAt(branchOffset,
+                        branchInst | ((uint)(writer.InstructionPointer - branchOffset) << 5));
                 }
 
                 // Fallback.
@@ -268,15 +269,18 @@ namespace Ryujinx.Cpu.LightningJit
         /// <param name="tempRegister">First temporary register</param>
         /// <param name="tempRegister2">Second temporary register</param>
         /// <param name="enter">True if entering guest code, false otherwise</param>
-        private static void EmitSyncFpContext(ref Assembler asm, Operand context, Operand tempRegister, Operand tempRegister2, bool enter)
+        private static void EmitSyncFpContext(ref Assembler asm, Operand context, Operand tempRegister,
+            Operand tempRegister2, bool enter)
         {
             if (enter)
             {
-                EmitSwapFpFlags(ref asm, context, tempRegister, tempRegister2, NativeContext.GetFpFlagsOffset(), NativeContext.GetHostFpFlagsOffset());
+                EmitSwapFpFlags(ref asm, context, tempRegister, tempRegister2, NativeContext.GetFpFlagsOffset(),
+                    NativeContext.GetHostFpFlagsOffset());
             }
             else
             {
-                EmitSwapFpFlags(ref asm, context, tempRegister, tempRegister2, NativeContext.GetHostFpFlagsOffset(), NativeContext.GetFpFlagsOffset());
+                EmitSwapFpFlags(ref asm, context, tempRegister, tempRegister2, NativeContext.GetHostFpFlagsOffset(),
+                    NativeContext.GetFpFlagsOffset());
             }
         }
 
@@ -289,7 +293,8 @@ namespace Ryujinx.Cpu.LightningJit
         /// <param name="tempRegister2">Second temporary register</param>
         /// <param name="loadOffset">Offset of the new flags that will be loaded</param>
         /// <param name="storeOffset">Offset where the current flags should be saved</param>
-        private static void EmitSwapFpFlags(ref Assembler asm, Operand context, Operand tempRegister, Operand tempRegister2, int loadOffset, int storeOffset)
+        private static void EmitSwapFpFlags(ref Assembler asm, Operand context, Operand tempRegister,
+            Operand tempRegister2, int loadOffset, int storeOffset)
         {
             asm.MrsFpcr(tempRegister);
             asm.MrsFpsr(tempRegister2);
@@ -339,7 +344,8 @@ namespace Ryujinx.Cpu.LightningJit
                 asm.Cbz(Register(17), 8);
                 asm.B((loopStartIndex - writer.InstructionPointer) * 4);
 
-                EmitSyncFpContext(ref asm, context, Register(16, OperandType.I32), Register(17, OperandType.I32), false);
+                EmitSyncFpContext(ref asm, context, Register(16, OperandType.I32), Register(17, OperandType.I32),
+                    false);
 
                 rsr.WriteEpilogue(ref asm);
 

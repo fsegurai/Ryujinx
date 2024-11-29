@@ -473,9 +473,19 @@ namespace Ryujinx.UI.Common.Configuration
             public ReactiveObject<string> ShadersDumpPath { get; private set; }
 
             /// <summary>
-            /// Enables or disables Vertical Sync
+            /// Toggles the present interval mode. Options are Switch (60Hz), Unbounded (previously Vsync off), and Custom, if enabled.
             /// </summary>
-            public ReactiveObject<bool> EnableVsync { get; private set; }
+            public ReactiveObject<VSyncMode> VSyncMode { get; private set; }
+
+            /// <summary>
+            /// Enables or disables the custom present interval mode.
+            /// </summary>
+            public ReactiveObject<bool> EnableCustomVSyncInterval { get; private set; }
+
+            /// <summary>
+            /// Changes the custom present interval.
+            /// </summary>
+            public ReactiveObject<int> CustomVSyncInterval { get; private set; }
 
             /// <summary>
             /// Enables or disables Shader cache
@@ -535,8 +545,12 @@ namespace Ryujinx.UI.Common.Configuration
                 AspectRatio = new ReactiveObject<AspectRatio>();
                 AspectRatio.LogChangesToValue(nameof(AspectRatio));
                 ShadersDumpPath = new ReactiveObject<string>();
-                EnableVsync = new ReactiveObject<bool>();
-                EnableVsync.LogChangesToValue(nameof(EnableVsync));
+                VSyncMode = new ReactiveObject<VSyncMode>();
+                VSyncMode.LogChangesToValue(nameof(VSyncMode));
+                EnableCustomVSyncInterval = new ReactiveObject<bool>();
+                EnableCustomVSyncInterval.LogChangesToValue(nameof(EnableCustomVSyncInterval));
+                CustomVSyncInterval = new ReactiveObject<int>();
+                CustomVSyncInterval.LogChangesToValue(nameof(CustomVSyncInterval));
                 EnableShaderCache = new ReactiveObject<bool>();
                 EnableShaderCache.LogChangesToValue(nameof(EnableShaderCache));
                 EnableTextureRecompression = new ReactiveObject<bool>();

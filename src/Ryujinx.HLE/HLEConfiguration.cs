@@ -9,6 +9,7 @@ using Ryujinx.HLE.HOS.Services.Account.Acc;
 using Ryujinx.HLE.HOS.SystemState;
 using Ryujinx.HLE.UI;
 using System;
+using VSyncMode = Ryujinx.Common.Configuration.VSyncMode;
 
 namespace Ryujinx.HLE
 {
@@ -84,9 +85,14 @@ namespace Ryujinx.HLE
         internal readonly RegionCode Region;
 
         /// <summary>
-        /// Control the initial state of the vertical sync in the SurfaceFlinger service.
+        /// Control the initial state of the present interval in the SurfaceFlinger service (previously Vsync).
         /// </summary>
-        internal readonly bool EnableVsync;
+        internal readonly VSyncMode VSyncMode;
+
+        /// <summary>
+        /// Control the custom VSync interval, if enabled and active.
+        /// </summary>
+        internal readonly int CustomVSyncInterval;
 
         /// <summary>
         /// Control the initial state of the docked mode.
@@ -163,17 +169,17 @@ namespace Ryujinx.HLE
         /// Multiplayer Mode
         /// </summary>
         public MultiplayerMode MultiplayerMode { internal get; set; }
-        
+
         /// <summary>
         /// Disable P2P mode
         /// </summary>
         public bool MultiplayerDisableP2p { internal get; set; }
-        
+
         /// <summary>
         /// Multiplayer Passphrase
         /// </summary>
         public string MultiplayerLdnPassphrase { internal get; set; }
-        
+
         /// <summary>
         /// LDN Server
         /// </summary>
@@ -185,34 +191,35 @@ namespace Ryujinx.HLE
         public Action RefreshInputConfig { internal get; set; }
 
         public HLEConfiguration(VirtualFileSystem virtualFileSystem,
-                                LibHacHorizonManager libHacHorizonManager,
-                                ContentManager contentManager,
-                                AccountManager accountManager,
-                                UserChannelPersistence userChannelPersistence,
-                                IRenderer gpuRenderer,
-                                IHardwareDeviceDriver audioDeviceDriver,
-                                MemoryConfiguration memoryConfiguration,
-                                IHostUIHandler hostUIHandler,
-                                SystemLanguage systemLanguage,
-                                RegionCode region,
-                                bool enableVsync,
-                                bool enableDockedMode,
-                                bool enablePtc,
-                                bool enableInternetAccess,
-                                IntegrityCheckLevel fsIntegrityCheckLevel,
-                                int fsGlobalAccessLogMode,
-                                long systemTimeOffset,
-                                string timeZone,
-                                MemoryManagerMode memoryManagerMode,
-                                bool ignoreMissingServices,
-                                AspectRatio aspectRatio,
-                                float audioVolume,
-                                bool useHypervisor,
-                                string multiplayerLanInterfaceId,
-                                MultiplayerMode multiplayerMode,
-                                bool multiplayerDisableP2p,
-                                string multiplayerLdnPassphrase,
-                                string multiplayerLdnServer)
+            LibHacHorizonManager libHacHorizonManager,
+            ContentManager contentManager,
+            AccountManager accountManager,
+            UserChannelPersistence userChannelPersistence,
+            IRenderer gpuRenderer,
+            IHardwareDeviceDriver audioDeviceDriver,
+            MemoryConfiguration memoryConfiguration,
+            IHostUIHandler hostUIHandler,
+            SystemLanguage systemLanguage,
+            RegionCode region,
+            VSyncMode vSyncMode,
+            bool enableDockedMode,
+            bool enablePtc,
+            bool enableInternetAccess,
+            IntegrityCheckLevel fsIntegrityCheckLevel,
+            int fsGlobalAccessLogMode,
+            long systemTimeOffset,
+            string timeZone,
+            MemoryManagerMode memoryManagerMode,
+            bool ignoreMissingServices,
+            AspectRatio aspectRatio,
+            float audioVolume,
+            bool useHypervisor,
+            string multiplayerLanInterfaceId,
+            MultiplayerMode multiplayerMode,
+            bool multiplayerDisableP2p,
+            string multiplayerLdnPassphrase,
+            string multiplayerLdnServer,
+            int customVSyncInterval)
         {
             VirtualFileSystem = virtualFileSystem;
             LibHacHorizonManager = libHacHorizonManager;
@@ -225,7 +232,8 @@ namespace Ryujinx.HLE
             HostUIHandler = hostUIHandler;
             SystemLanguage = systemLanguage;
             Region = region;
-            EnableVsync = enableVsync;
+            VSyncMode = vSyncMode;
+            CustomVSyncInterval = customVSyncInterval;
             EnableDockedMode = enableDockedMode;
             EnablePtc = enablePtc;
             EnableInternetAccess = enableInternetAccess;

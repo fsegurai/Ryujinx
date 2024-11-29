@@ -52,6 +52,10 @@ namespace Ryujinx.Ava.UI.ViewModels
         private int _graphicsBackendIndex;
         private int _scalingFilter;
         private int _scalingFilterLevel;
+        private int _customVSyncInterval;
+        private bool _enableCustomVSyncInterval;
+        private int _customVSyncIntervalPercentageProxy;
+        private VSyncMode _vSyncMode;
 
         public event Action CloseWindow;
         public event Action SaveSettingsEvent;
@@ -79,12 +83,14 @@ namespace Ryujinx.Ava.UI.ViewModels
             {
                 _graphicsBackendMultithreadingIndex = value;
 
-                if (_graphicsBackendMultithreadingIndex != (int)ConfigurationState.Instance.Graphics.BackendThreading.Value)
+                if (_graphicsBackendMultithreadingIndex !=
+                    (int)ConfigurationState.Instance.Graphics.BackendThreading.Value)
                 {
                     Dispatcher.UIThread.InvokeAsync(() =>
-                         ContentDialogHelper.CreateInfoDialog(LocaleManager.Instance[LocaleKeys.DialogSettingsBackendThreadingWarningMessage],
-                             string.Empty,
-                             string.Empty,
+                        ContentDialogHelper.CreateInfoDialog(
+                            LocaleManager.Instance[LocaleKeys.DialogSettingsBackendThreadingWarningMessage],
+                            string.Empty,
+                            string.Empty,
                             LocaleManager.Instance[LocaleKeys.InputDialogOk],
                             LocaleManager.Instance[LocaleKeys.DialogSettingsBackendThreadingWarningTitle])
                     );
@@ -118,7 +124,8 @@ namespace Ryujinx.Ava.UI.ViewModels
 
         public bool IsOpenGLAvailable => !OperatingSystem.IsMacOS();
 
-        public bool IsHypervisorAvailable => OperatingSystem.IsMacOS() && RuntimeInformation.ProcessArchitecture == Architecture.Arm64;
+        public bool IsHypervisorAvailable =>
+            OperatingSystem.IsMacOS() && RuntimeInformation.ProcessArchitecture == Architecture.Arm64;
 
         public bool GameDirectoryChanged
         {
@@ -154,7 +161,77 @@ namespace Ryujinx.Ava.UI.ViewModels
         public bool EnableDockedMode { get; set; }
         public bool EnableKeyboard { get; set; }
         public bool EnableMouse { get; set; }
-        public bool EnableVsync { get; set; }
+
+        public VSyncMode VSyncMode
+        {
+            get => _vSyncMode;
+            set
+            {
+                if (value == VSyncMode.Custom ||
+                    value == VSyncMode.Switch ||
+                    value == VSyncMode.Unbounded)
+                {
+                    _vSyncMode = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public int CustomVSyncIntervalPercentageProxy
+        {
+            get => _customVSyncIntervalPercentageProxy;
+            set
+            {
+                int newInterval = (int)((value / 100f) * 60);
+                _customVSyncInterval = newInterval;
+                _customVSyncIntervalPercentageProxy = value;
+                OnPropertyChanged((nameof(CustomVSyncInterval)));
+                OnPropertyChanged((nameof(CustomVSyncIntervalPercentageText)));
+            }
+        }
+
+        public string CustomVSyncIntervalPercentageText
+        {
+            get
+            {
+                string text = CustomVSyncIntervalPercentageProxy.ToString() + "%";
+                return text;
+            }
+        }
+
+        public bool EnableCustomVSyncInterval
+        {
+            get => _enableCustomVSyncInterval;
+            set
+            {
+                _enableCustomVSyncInterval = value;
+                if (_vSyncMode == VSyncMode.Custom && !value)
+                {
+                    VSyncMode = VSyncMode.Switch;
+                }
+                else if (value)
+                {
+                    VSyncMode = VSyncMode.Custom;
+                }
+
+                OnPropertyChanged();
+            }
+        }
+
+        public int CustomVSyncInterval
+        {
+            get => _customVSyncInterval;
+            set
+            {
+                _customVSyncInterval = value;
+                int newPercent = (int)((value / 60f) * 100);
+                _customVSyncIntervalPercentageProxy = newPercent;
+                OnPropertyChanged(nameof(CustomVSyncIntervalPercentageProxy));
+                OnPropertyChanged(nameof(CustomVSyncIntervalPercentageText));
+                OnPropertyChanged();
+            }
+        }
+
         public bool EnablePptc { get; set; }
         public bool EnableLowPowerPptc { get; set; }
         public bool EnableInternetAccess { get; set; }
@@ -187,7 +264,7 @@ namespace Ryujinx.Ava.UI.ViewModels
 
         public string TimeZone { get; set; }
         public string ShaderDumpPath { get; set; }
-        
+
         public string LdnPassphrase
         {
             get => _ldnPassphrase;
@@ -208,6 +285,7 @@ namespace Ryujinx.Ava.UI.ViewModels
         public int AspectRatio { get; set; }
         public int AntiAliasingEffect { get; set; }
         public string ScalingFilterLevelText => ScalingFilterLevel.ToString("0");
+
         public int ScalingFilterLevel
         {
             get => _scalingFilterLevel;
@@ -218,9 +296,11 @@ namespace Ryujinx.Ava.UI.ViewModels
                 OnPropertyChanged(nameof(ScalingFilterLevelText));
             }
         }
+
         public int OpenglDebugLevel { get; set; }
         public int MemoryMode { get; set; }
         public int BaseStyleIndex { get; set; }
+
         public int GraphicsBackendIndex
         {
             get => _graphicsBackendIndex;
@@ -231,6 +311,7 @@ namespace Ryujinx.Ava.UI.ViewModels
                 OnPropertyChanged(nameof(IsVulkanSelected));
             }
         }
+
         public int ScalingFilter
         {
             get => _scalingFilter;
@@ -278,7 +359,8 @@ namespace Ryujinx.Ava.UI.ViewModels
             set
             {
                 _networkInterfaceIndex = value != -1 ? value : 0;
-                ConfigurationState.Instance.Multiplayer.LanInterfaceId.Value = _networkInterfaces[NetworkInterfaceList[_networkInterfaceIndex]];
+                ConfigurationState.Instance.Multiplayer.LanInterfaceId.Value =
+                    _networkInterfaces[NetworkInterfaceList[_networkInterfaceIndex]];
             }
         }
 
@@ -291,10 +373,12 @@ namespace Ryujinx.Ava.UI.ViewModels
                 ConfigurationState.Instance.Multiplayer.Mode.Value = (MultiplayerMode)_multiplayerModeIndex;
             }
         }
-        
+
         [GeneratedRegex("Ryujinx-[0-9a-f]{8}")]
         private static partial Regex LdnPassphraseRegex();
+
         public bool IsInvalidLdnPassphraseVisible { get; set; }
+
         public string LdnServer
         {
             get => _LdnServer;
@@ -367,14 +451,18 @@ namespace Ryujinx.Ava.UI.ViewModels
                     {
                         _gpuIds.Add(device.Id);
 
-                        AvailableGpus.Add(new ComboBoxItem { Content = $"{device.Name} {(device.IsDiscrete ? "(dGPU)" : string.Empty)}" });
+                        AvailableGpus.Add(new ComboBoxItem
+                        {
+                            Content = $"{device.Name} {(device.IsDiscrete ? "(dGPU)" : string.Empty)}"
+                        });
                     });
                 }
             }
 
             // GPU configuration needs to be loaded during the async method or it will always return 0.
-            PreferredGpuIndex = _gpuIds.Contains(ConfigurationState.Instance.Graphics.PreferredGpu) ?
-                                _gpuIds.IndexOf(ConfigurationState.Instance.Graphics.PreferredGpu) : 0;
+            PreferredGpuIndex = _gpuIds.Contains(ConfigurationState.Instance.Graphics.PreferredGpu)
+                ? _gpuIds.IndexOf(ConfigurationState.Instance.Graphics.PreferredGpu)
+                : 0;
 
             Dispatcher.UIThread.Post(() => OnPropertyChanged(nameof(PreferredGpuIndex)));
         }
@@ -417,14 +505,16 @@ namespace Ryujinx.Ava.UI.ViewModels
             }
 
             // Network interface index  needs to be loaded during the async method or it will always return 0.
-            NetworkInterfaceIndex = _networkInterfaces.Values.ToList().IndexOf(ConfigurationState.Instance.Multiplayer.LanInterfaceId.Value);
+            NetworkInterfaceIndex = _networkInterfaces.Values.ToList()
+                .IndexOf(ConfigurationState.Instance.Multiplayer.LanInterfaceId.Value);
 
             Dispatcher.UIThread.Post(() => OnPropertyChanged(nameof(NetworkInterfaceIndex)));
         }
-        
+
         private bool ValidateLdnPassphrase(string passphrase)
         {
-            return string.IsNullOrEmpty(passphrase) || (passphrase.Length == 16 && LdnPassphraseRegex().IsMatch(passphrase));
+            return string.IsNullOrEmpty(passphrase) ||
+                   (passphrase.Length == 16 && LdnPassphraseRegex().IsMatch(passphrase));
         }
 
         public void ValidateAndSetTimeZone(string location)
@@ -481,7 +571,9 @@ namespace Ryujinx.Ava.UI.ViewModels
             CurrentDate = currentDateTime.Date;
             CurrentTime = currentDateTime.TimeOfDay;
 
-            EnableVsync = config.Graphics.EnableVsync;
+            EnableCustomVSyncInterval = config.Graphics.EnableCustomVSyncInterval.Value;
+            CustomVSyncInterval = config.Graphics.CustomVSyncInterval;
+            VSyncMode = config.Graphics.VSyncMode;
             EnableFsIntegrityChecks = config.System.EnableFsIntegrityChecks;
             DramSize = config.System.DramSize;
             IgnoreMissingServices = config.System.IgnoreMissingServices;
@@ -586,8 +678,11 @@ namespace Ryujinx.Ava.UI.ViewModels
                 config.System.TimeZone.Value = TimeZone;
             }
 
-            config.System.SystemTimeOffset.Value = Convert.ToInt64((CurrentDate.ToUnixTimeSeconds() + CurrentTime.TotalSeconds) - DateTimeOffset.Now.ToUnixTimeSeconds());
-            config.Graphics.EnableVsync.Value = EnableVsync;
+            config.System.SystemTimeOffset.Value = Convert.ToInt64(
+                (CurrentDate.ToUnixTimeSeconds() + CurrentTime.TotalSeconds) - DateTimeOffset.Now.ToUnixTimeSeconds());
+            config.Graphics.VSyncMode.Value = VSyncMode;
+            config.Graphics.EnableCustomVSyncInterval.Value = EnableCustomVSyncInterval;
+            config.Graphics.CustomVSyncInterval.Value = CustomVSyncInterval;
             config.System.EnableFsIntegrityChecks.Value = EnableFsIntegrityChecks;
             config.System.DramSize.Value = DramSize;
             config.System.IgnoreMissingServices.Value = IgnoreMissingServices;
@@ -613,7 +708,8 @@ namespace Ryujinx.Ava.UI.ViewModels
             config.Graphics.ScalingFilter.Value = (ScalingFilter)ScalingFilter;
             config.Graphics.ScalingFilterLevel.Value = ScalingFilterLevel;
 
-            if (ConfigurationState.Instance.Graphics.BackendThreading != (BackendThreading)GraphicsBackendMultithreadingIndex)
+            if (ConfigurationState.Instance.Graphics.BackendThreading !=
+                (BackendThreading)GraphicsBackendMultithreadingIndex)
             {
                 DriverUtilities.ToggleOGLThreading(GraphicsBackendMultithreadingIndex == (int)BackendThreading.Off);
             }
@@ -657,6 +753,7 @@ namespace Ryujinx.Ava.UI.ViewModels
             config.ToFileFormat().SaveConfig(Program.ConfigurationPath);
 
             MainWindow.UpdateGraphicsConfig();
+            MainWindow.MainWindowViewModel.VSyncModeSettingChanged();
 
             SaveSettingsEvent?.Invoke();
 

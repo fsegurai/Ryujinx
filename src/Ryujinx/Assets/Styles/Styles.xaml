@@ -1,7 +1,8 @@
 ﻿<Styles
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:ui="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia">
+    xmlns:ui="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+    xmlns:windowing="clr-namespace:FluentAvalonia.UI.Windowing;assembly=FluentAvalonia">
     <Design.PreviewWith>
         <Border Height="2000"
                 Padding="20">
@@ -231,17 +232,17 @@
         <Setter Property="BorderBrush"
                 Value="{DynamicResource HighlightBrush}" />
     </Style>
-    <Style Selector="Button">
+    <Style Selector="Button:not(windowing|MinMaxCloseControl Button)">
         <Setter Property="MinWidth"
                 Value="80" />
     </Style>
     <Style Selector="ProgressBar:horizontal">
-        <Setter Property="MinWidth" Value="0"/>
-        <Setter Property="MinHeight" Value="0"/>
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="MinHeight" Value="0" />
     </Style>
     <Style Selector="ProgressBar:vertical">
-        <Setter Property="MinWidth" Value="0"/>
-        <Setter Property="MinHeight" Value="0"/>
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="MinHeight" Value="0" />
     </Style>
     <Style Selector="ProgressBar /template/ Border#ProgressBarTrack">
         <Setter Property="IsVisible"
@@ -345,7 +346,7 @@
         <Setter Property="Background"
                 Value="{DynamicResource AppListBackgroundColor}" />
         <Setter Property="BorderThickness"
-                Value="2"/>
+                Value="2" />
     </Style>
     <Style Selector="ListBox ListBoxItem:selected /template/ ContentPresenter">
         <Setter Property="Background"

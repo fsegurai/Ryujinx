@@ -80,10 +80,12 @@ namespace Ryujinx.Ava.UI.Views.Settings
                                 var viewModel = (DataContext) as SettingsViewModel;
                                 var buttonValue = e.ButtonValue.Value;
 
+                                if (viewModel == null) return;
+
                                 switch (button.Name)
                                 {
-                                    case "ToggleVsync":
-                                        viewModel.KeyboardHotkey.ToggleVsync = buttonValue.AsHidType<Key>();
+                                    case "ToggleVSyncMode":
+                                        viewModel.KeyboardHotkey.ToggleVSyncMode = buttonValue.AsHidType<Key>();
                                         break;
                                     case "Screenshot":
                                         viewModel.KeyboardHotkey.Screenshot = buttonValue.AsHidType<Key>();
@@ -108,6 +110,14 @@ namespace Ryujinx.Ava.UI.Views.Settings
                                         break;
                                     case "VolumeDown":
                                         viewModel.KeyboardHotkey.VolumeDown = buttonValue.AsHidType<Key>();
+                                        break;
+                                    case "CustomVSyncIntervalIncrement":
+                                        viewModel.KeyboardHotkey.CustomVSyncIntervalIncrement =
+                                            buttonValue.AsHidType<Key>();
+                                        break;
+                                    case "CustomVSyncIntervalDecrement":
+                                        viewModel.KeyboardHotkey.CustomVSyncIntervalDecrement =
+                                            buttonValue.AsHidType<Key>();
                                         break;
                                 }
                             }

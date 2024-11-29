@@ -119,7 +119,8 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
         public static void Tbb(CodeGenContext context, uint rn, uint rm, bool h)
         {
-            context.Arm64Assembler.Mov(context.RegisterAllocator.RemapGprRegister(RegisterUtils.PcRegister), context.Pc);
+            context.Arm64Assembler.Mov(context.RegisterAllocator.RemapGprRegister(RegisterUtils.PcRegister),
+                context.Pc);
 
             context.AddPendingTableBranch(rn, rm, h);
 
@@ -140,22 +141,34 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
             bool isTail = false)
         {
             int tempRegister;
+            int tempGuestAddress = -1;
+            bool inlineLookup = guestAddress.Kind != OperandKind.Constant &&
+                                funcTable is { Sparse: true };
 
             if (guestAddress.Kind == OperandKind.Constant)
             {
                 tempRegister = regAlloc.AllocateTempGprRegister();
 
                 asm.Mov(Register(tempRegister), guestAddress.Value);
-                asm.StrRiUn(Register(tempRegister), Register(regAlloc.FixedContextRegister), NativeContextOffsets.DispatchAddressOffset);
+                asm.StrRiUn(Register(tempRegister), Register(regAlloc.FixedContextRegister),
+                    NativeContextOffsets.DispatchAddressOffset);
 
                 regAlloc.FreeTempGprRegister(tempRegister);
             }
             else
             {
-                asm.StrRiUn(guestAddress, Register(regAlloc.FixedContextRegister), NativeContextOffsets.DispatchAddressOffset);
+                asm.StrRiUn(guestAddress, Register(regAlloc.FixedContextRegister),
+                    NativeContextOffsets.DispatchAddressOffset);
+
+                if (inlineLookup && guestAddress.Value == 0)
+                {
+                    // X0 will be overwritten. Move the address to a temp register.
+                    tempGuestAddress = regAlloc.AllocateTempGprRegister();
+                    asm.Mov(Register(tempGuestAddress), guestAddress);
+                }
             }
 
-            tempRegister = regAlloc.FixedContextRegister == 1 ? 2 : 1;
+            tempRegister = NextFreeRegister(1, tempGuestAddress);
 
             if (!isTail)
             {
@@ -175,6 +188,34 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
                 asm.Mov(rn, funcPtrLoc & ~0xfffUL);
                 asm.LdrRiUn(rn, rn, (int)(funcPtrLoc & 0xfffUL));
+            }
+            else if (inlineLookup)
+            {
+                // Inline table lookup. Only enabled when the sparse function table is enabled with 2 levels.
+                Operand indexReg = Register(NextFreeRegister(tempRegister + 1, tempGuestAddress));
+                if (tempGuestAddress != -1)
+                {
+                    guestAddress = Register(tempGuestAddress);
+                }
+
+                ulong tableBase = (ulong)funcTable.Base;
+                // Index into the table.
+                asm.Mov(rn, tableBase);
+                for (int i = 0; i < funcTable.Levels.Length; i++)
+                {
+                    var level = funcTable.Levels[i];
+                    asm.Ubfx(indexReg, guestAddress, level.Index, level.Length);
+                    asm.Lsl(indexReg, indexReg, Const(3));
+                    // Index into the page.
+                    asm.Add(rn, rn, indexReg);
+                    // Load the page address.
+                    asm.LdrRiUn(rn, rn, 0);
+                }
+
+                if (tempGuestAddress != -1)
+                {
+                    regAlloc.FreeTempGprRegister(tempGuestAddress);
+                }
             }
             else
             {
@@ -209,15 +250,18 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
             WriteSpillOrFillSkipContext(ref asm, regAlloc, spillOffset, spill: false);
         }
 
-        private static void WriteSpillOrFillSkipContext(ref Assembler asm, RegisterAllocator regAlloc, int spillOffset, bool spill)
+        private static void WriteSpillOrFillSkipContext(ref Assembler asm, RegisterAllocator regAlloc, int spillOffset,
+            bool spill)
         {
-            uint gprMask = regAlloc.UsedGprsMask & ((1u << regAlloc.FixedContextRegister) | (1u << regAlloc.FixedPageTableRegister));
+            uint gprMask = regAlloc.UsedGprsMask &
+                           ((1u << regAlloc.FixedContextRegister) | (1u << regAlloc.FixedPageTableRegister));
 
             while (gprMask != 0)
             {
                 int reg = BitOperations.TrailingZeroCount(gprMask);
 
-                if (reg < 31 && (gprMask & (2u << reg)) != 0 && spillOffset < RegisterSaveRestore.Encodable9BitsOffsetLimit)
+                if (reg < 31 && (gprMask & (2u << reg)) != 0 &&
+                    spillOffset < RegisterSaveRestore.Encodable9BitsOffsetLimit)
                 {
                     if (spill)
                     {
@@ -251,6 +295,21 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
         private static Operand Register(int register, OperandType type = OperandType.I64)
         {
             return new Operand(register, RegisterType.Integer, type);
+        }
+
+        private static Operand Const(long value, OperandType type = OperandType.I64)
+        {
+            return new Operand(type, (ulong)value);
+        }
+
+        private static int NextFreeRegister(int start, int avoid)
+        {
+            if (start == avoid)
+            {
+                start++;
+            }
+
+            return start;
         }
     }
 }

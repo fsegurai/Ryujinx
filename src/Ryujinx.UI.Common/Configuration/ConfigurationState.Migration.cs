@@ -83,7 +83,7 @@ namespace Ryujinx.UI.Common.Configuration
 
                 configurationFileFormat.ColumnSort = new ColumnSort { SortColumnId = 0, SortAscending = false, };
 
-                configurationFileFormat.Hotkeys = new KeyboardHotkeys { ToggleVsync = Key.F1, };
+                configurationFileFormat.Hotkeys = new KeyboardHotkeys { ToggleVSyncMode = Key.F1, };
 
                 configurationFileUpdated = true;
             }
@@ -289,7 +289,8 @@ namespace Ryujinx.UI.Common.Configuration
                 Ryujinx.Common.Logging.Logger.Warning?.Print(LogClass.Application,
                     $"Outdated configuration version {configurationFileFormat.Version}, migrating to version 28.");
 
-                configurationFileFormat.Hotkeys = new KeyboardHotkeys { ToggleVsync = Key.F1, Screenshot = Key.F8, };
+                configurationFileFormat.Hotkeys =
+                    new KeyboardHotkeys { ToggleVSyncMode = Key.F1, Screenshot = Key.F8, };
 
                 configurationFileUpdated = true;
             }
@@ -301,7 +302,7 @@ namespace Ryujinx.UI.Common.Configuration
 
                 configurationFileFormat.Hotkeys = new KeyboardHotkeys
                 {
-                    ToggleVsync = Key.F1, Screenshot = Key.F8, ShowUI = Key.F4,
+                    ToggleVSyncMode = Key.F1, Screenshot = Key.F8, ShowUI = Key.F4,
                 };
 
                 configurationFileUpdated = true;
@@ -343,7 +344,7 @@ namespace Ryujinx.UI.Common.Configuration
 
                 configurationFileFormat.Hotkeys = new KeyboardHotkeys
                 {
-                    ToggleVsync = configurationFileFormat.Hotkeys.ToggleVsync,
+                    ToggleVSyncMode = configurationFileFormat.Hotkeys.ToggleVSyncMode,
                     Screenshot = configurationFileFormat.Hotkeys.Screenshot,
                     ShowUI = configurationFileFormat.Hotkeys.ShowUI,
                     Pause = Key.F5,
@@ -359,7 +360,7 @@ namespace Ryujinx.UI.Common.Configuration
 
                 configurationFileFormat.Hotkeys = new KeyboardHotkeys
                 {
-                    ToggleVsync = configurationFileFormat.Hotkeys.ToggleVsync,
+                    ToggleVSyncMode = configurationFileFormat.Hotkeys.ToggleVSyncMode,
                     Screenshot = configurationFileFormat.Hotkeys.Screenshot,
                     ShowUI = configurationFileFormat.Hotkeys.ShowUI,
                     Pause = configurationFileFormat.Hotkeys.Pause,
@@ -439,7 +440,7 @@ namespace Ryujinx.UI.Common.Configuration
 
                 configurationFileFormat.Hotkeys = new KeyboardHotkeys
                 {
-                    ToggleVsync = configurationFileFormat.Hotkeys.ToggleVsync,
+                    ToggleVSyncMode = configurationFileFormat.Hotkeys.ToggleVSyncMode,
                     Screenshot = configurationFileFormat.Hotkeys.Screenshot,
                     ShowUI = configurationFileFormat.Hotkeys.ShowUI,
                     Pause = configurationFileFormat.Hotkeys.Pause,
@@ -468,7 +469,7 @@ namespace Ryujinx.UI.Common.Configuration
 
                 configurationFileFormat.Hotkeys = new KeyboardHotkeys
                 {
-                    ToggleVsync = configurationFileFormat.Hotkeys.ToggleVsync,
+                    ToggleVSyncMode = configurationFileFormat.Hotkeys.ToggleVSyncMode,
                     Screenshot = configurationFileFormat.Hotkeys.Screenshot,
                     ShowUI = configurationFileFormat.Hotkeys.ShowUI,
                     Pause = configurationFileFormat.Hotkeys.Pause,
@@ -681,7 +682,7 @@ namespace Ryujinx.UI.Common.Configuration
             ShowTitleBar.Value = configurationFileFormat.ShowTitleBar;
             EnableHardwareAcceleration.Value = configurationFileFormat.EnableHardwareAcceleration;
             HideCursor.Value = configurationFileFormat.HideCursor;
-            Graphics.EnableVsync.Value = configurationFileFormat.EnableVsync;
+            Graphics.VSyncMode.Value = configurationFileFormat.VSyncMode;
             Graphics.EnableShaderCache.Value = configurationFileFormat.EnableShaderCache;
             Graphics.EnableTextureRecompression.Value = configurationFileFormat.EnableTextureRecompression;
             Graphics.EnableMacroHLE.Value = configurationFileFormat.EnableMacroHLE;

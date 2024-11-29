@@ -41,9 +41,11 @@ namespace Ryujinx.Graphics.OpenGL
         {
             GL.Disable(EnableCap.FramebufferSrgb);
 
-            (int oldDrawFramebufferHandle, int oldReadFramebufferHandle) = ((Pipeline)_renderer.Pipeline).GetBoundFramebuffers();
+            (int oldDrawFramebufferHandle, int oldReadFramebufferHandle) =
+                ((Pipeline)_renderer.Pipeline).GetBoundFramebuffers();
 
-            CopyTextureToFrameBufferRGB(0, GetCopyFramebufferHandleLazy(), (TextureView)texture, crop, swapBuffersCallback);
+            CopyTextureToFrameBufferRGB(0, GetCopyFramebufferHandleLazy(), (TextureView)texture, crop,
+                swapBuffersCallback);
 
             GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, oldReadFramebufferHandle);
             GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, oldDrawFramebufferHandle);
@@ -54,7 +56,7 @@ namespace Ryujinx.Graphics.OpenGL
             GL.PixelStore(PixelStoreParameter.UnpackAlignment, 4);
         }
 
-        public void ChangeVSyncMode(bool vsyncEnabled) { }
+        public void ChangeVSyncMode(VSyncMode vSyncMode) { }
 
         public void SetSize(int width, int height)
         {
@@ -64,7 +66,8 @@ namespace Ryujinx.Graphics.OpenGL
             _updateSize = true;
         }
 
-        private void CopyTextureToFrameBufferRGB(int drawFramebuffer, int readFramebuffer, TextureView view, ImageCrop crop, Action swapBuffersCallback)
+        private void CopyTextureToFrameBufferRGB(int drawFramebuffer, int readFramebuffer, TextureView view,
+            ImageCrop crop, Action swapBuffersCallback)
         {
             GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, drawFramebuffer);
             GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, readFramebuffer);
@@ -134,8 +137,12 @@ namespace Ryujinx.Graphics.OpenGL
                 srcY1 = crop.Bottom;
             }
 
-            float ratioX = crop.IsStretched ? 1.0f : MathF.Min(1.0f, _height * crop.AspectRatioX / (_width * crop.AspectRatioY));
-            float ratioY = crop.IsStretched ? 1.0f : MathF.Min(1.0f, _width * crop.AspectRatioY / (_height * crop.AspectRatioX));
+            float ratioX = crop.IsStretched
+                ? 1.0f
+                : MathF.Min(1.0f, _height * crop.AspectRatioX / (_width * crop.AspectRatioY));
+            float ratioY = crop.IsStretched
+                ? 1.0f
+                : MathF.Min(1.0f, _width * crop.AspectRatioY / (_height * crop.AspectRatioX));
 
             int dstWidth = (int)(_width * ratioX);
             int dstHeight = (int)(_height * ratioY);
@@ -178,7 +185,7 @@ namespace Ryujinx.Graphics.OpenGL
                         dstY0,
                         dstX1,
                         dstY1)
-                    );
+                );
 
                 srcX0 = dstX0;
                 srcY0 = dstY0;
@@ -257,7 +264,8 @@ namespace Ryujinx.Graphics.OpenGL
             long size = Math.Abs(4 * width * height);
             byte[] bitmap = new byte[size];
 
-            GL.ReadPixels(x, y, width, height, isBgra ? PixelFormat.Bgra : PixelFormat.Rgba, PixelType.UnsignedByte, bitmap);
+            GL.ReadPixels(x, y, width, height, isBgra ? PixelFormat.Bgra : PixelFormat.Rgba, PixelType.UnsignedByte,
+                bitmap);
 
             _renderer.OnScreenCaptured(new ScreenCaptureImageInfo(width, height, isBgra, bitmap, flipX, flipY));
         }
@@ -339,6 +347,7 @@ namespace Ryujinx.Graphics.OpenGL
                             _antiAliasing?.Dispose();
                             _antiAliasing = new SmaaPostProcessingEffect(_renderer, quality);
                         }
+
                         break;
                 }
             }
@@ -370,6 +379,7 @@ namespace Ryujinx.Graphics.OpenGL
                             _scalingFilter?.Dispose();
                             _scalingFilter = new FsrScalingFilter(_renderer);
                         }
+
                         _isLinear = false;
                         _scalingFilter.Level = _scalingFilterLevel;
 
@@ -381,6 +391,7 @@ namespace Ryujinx.Graphics.OpenGL
                             _scalingFilter?.Dispose();
                             _scalingFilter = new AreaScalingFilter(_renderer);
                         }
+
                         _isLinear = false;
 
                         RecreateUpscalingTexture();

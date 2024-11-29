@@ -46,7 +46,7 @@ namespace ARMeilleure.Translation
         public IMemoryManager Memory { get; }
 
         public EntryTable<uint> CountTable { get; }
-        public AddressTable<ulong> FunctionTable { get; }
+        public IAddressTable<ulong> FunctionTable { get; }
         public TranslatorStubs Stubs { get; }
 
         public ulong EntryAddress { get; }
@@ -62,7 +62,7 @@ namespace ARMeilleure.Translation
         public ArmEmitterContext(
             IMemoryManager memory,
             EntryTable<uint> countTable,
-            AddressTable<ulong> funcTable,
+            IAddressTable<ulong> funcTable,
             TranslatorStubs stubs,
             ulong entryAddress,
             bool highCq,
@@ -220,16 +220,16 @@ namespace ARMeilleure.Translation
                 switch (condition)
                 {
 #pragma warning disable IDE0055 // Disable formatting
-                    case Condition.Eq:   return ICompareEqual           (n, m);
-                    case Condition.Ne:   return ICompareNotEqual        (n, m);
+                    case Condition.Eq: return ICompareEqual(n, m);
+                    case Condition.Ne: return ICompareNotEqual(n, m);
                     case Condition.GeUn: return ICompareGreaterOrEqualUI(n, m);
-                    case Condition.LtUn: return ICompareLessUI          (n, m);
-                    case Condition.GtUn: return ICompareGreaterUI       (n, m);
-                    case Condition.LeUn: return ICompareLessOrEqualUI   (n, m);
-                    case Condition.Ge:   return ICompareGreaterOrEqual  (n, m);
-                    case Condition.Lt:   return ICompareLess            (n, m);
-                    case Condition.Gt:   return ICompareGreater         (n, m);
-                    case Condition.Le:   return ICompareLessOrEqual     (n, m);
+                    case Condition.LtUn: return ICompareLessUI(n, m);
+                    case Condition.GtUn: return ICompareGreaterUI(n, m);
+                    case Condition.LeUn: return ICompareLessOrEqualUI(n, m);
+                    case Condition.Ge: return ICompareGreaterOrEqual(n, m);
+                    case Condition.Lt: return ICompareLess(n, m);
+                    case Condition.Gt: return ICompareGreater(n, m);
+                    case Condition.Le: return ICompareLessOrEqual(n, m);
 #pragma warning restore IDE0055
                 }
             }
@@ -256,12 +256,12 @@ namespace ARMeilleure.Translation
                 switch (condition)
                 {
 #pragma warning disable IDE0055 // Disable formatting
-                    case Condition.Eq: return ICompareEqual         (n, m);
-                    case Condition.Ne: return ICompareNotEqual      (n, m);
+                    case Condition.Eq: return ICompareEqual(n, m);
+                    case Condition.Ne: return ICompareNotEqual(n, m);
                     case Condition.Ge: return ICompareGreaterOrEqual(n, m);
-                    case Condition.Lt: return ICompareLess          (n, m);
-                    case Condition.Gt: return ICompareGreater       (n, m);
-                    case Condition.Le: return ICompareLessOrEqual   (n, m);
+                    case Condition.Lt: return ICompareLess(n, m);
+                    case Condition.Gt: return ICompareGreater(n, m);
+                    case Condition.Le: return ICompareLessOrEqual(n, m);
 #pragma warning restore IDE0055
                 }
             }
