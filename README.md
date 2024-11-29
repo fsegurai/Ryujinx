@@ -15,6 +15,10 @@
       <img src="https://img.shields.io/github/v/release/fsegurai/Ryujinx"
           alt="Latest Release">
   </a>
+  <a href="https://github.com/fsegurai/Ryujinx/actions/workflows/canary.yml">
+      <img src="https://github.com/fsegurai/Ryujinx/actions/workflows/canary.yml/badge.svg?branch=canary"
+          alt="Canary release job">
+  </a>
   <br>
   <img alt="GitHub contributors" src="https://img.shields.io/github/contributors/fsegurai/Ryujinx">
   <img alt="Dependency status for repo" src="https://img.shields.io/librariesio/github/fsegurai/Ryujinx">
