@@ -1,3 +1,4 @@
+using Ryujinx.Common;
 using Ryujinx.Common.Configuration;
 using Ryujinx.Common.Configuration.Hid;
 using Ryujinx.Common.Configuration.Multiplayer;
@@ -16,7 +17,7 @@ namespace Ryujinx.UI.Common.Configuration
         /// <summary>
         /// The current version of the file format
         /// </summary>
-        public const int CurrentVersion = 56;
+        public const int CurrentVersion = 57;
 
         /// <summary>
         /// Version of the configuration file format
@@ -29,7 +30,7 @@ namespace Ryujinx.UI.Common.Configuration
         public bool EnableFileLog { get; set; }
 
         /// <summary>
-        /// Whether or not backend threading is enabled. The "Auto" setting will determine whether threading should be enabled at runtime.
+        /// Whether backend threading is enabled. The "Auto" setting will determine whether threading should be enabled at runtime.
         /// </summary>
         public BackendThreading BackendThreading { get; set; }
 
@@ -44,7 +45,7 @@ namespace Ryujinx.UI.Common.Configuration
         public float ResScaleCustom { get; set; }
 
         /// <summary>
-        /// Max Anisotropy. Values range from 0 - 16. Set to -1 to let the game decide.
+        /// Max Anisotropy. Values range from 0 to 16. Set to -1 to let the game decide.
         /// </summary>
         public float MaxAnisotropy { get; set; }
 
@@ -54,7 +55,7 @@ namespace Ryujinx.UI.Common.Configuration
         public AspectRatio AspectRatio { get; set; }
 
         /// <summary>
-        /// Applies anti-aliasing to the renderer.
+        /// Applies antialiasing to the renderer.
         /// </summary>
         public AntiAliasing AntiAliasing { get; set; }
 
@@ -189,9 +190,19 @@ namespace Ryujinx.UI.Common.Configuration
         public HideCursorMode HideCursor { get; set; }
 
         /// <summary>
-        /// Enables or disables Vertical Sync
+        /// Current VSync mode; 60 (Switch), unbounded ("Vsync off"), or custom
         /// </summary>
-        public bool EnableVsync { get; set; }
+        public VSyncMode VSyncMode { get; set; }
+
+        /// <summary>
+        /// Enables or disables the custom present interval
+        /// </summary>
+        public bool EnableCustomVSyncInterval { get; set; }
+
+        /// <summary>
+        /// The custom present interval value
+        /// </summary>
+        public int CustomVSyncInterval { get; set; }
 
         /// <summary>
         /// Enables or disables Shader cache

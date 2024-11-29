@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using VSyncMode = Ryujinx.Common.Configuration.VSyncMode;
 
 namespace Ryujinx.HLE.HOS.Services.SurfaceFlinger
 {
@@ -31,6 +32,9 @@ namespace Ryujinx.HLE.HOS.Services.SurfaceFlinger
         private long _ticksPerFrame;
         private readonly long _spinTicks;
         private readonly long _1msTicks;
+
+        private VSyncMode _vSyncMode;
+        private long _targetVSyncInterval;
 
         private int _swapInterval;
         private int _swapIntervalDelay;
@@ -63,8 +67,7 @@ namespace Ryujinx.HLE.HOS.Services.SurfaceFlinger
 
             _composerThread = new Thread(HandleComposition)
             {
-                Name = "SurfaceFlinger.Composer",
-                Priority = ThreadPriority.AboveNormal
+                Name = "SurfaceFlinger.Composer", Priority = ThreadPriority.AboveNormal
             };
 
             _ticks = 0;
@@ -88,11 +91,13 @@ namespace Ryujinx.HLE.HOS.Services.SurfaceFlinger
             }
             else
             {
-                _ticksPerFrame = Stopwatch.Frequency / TargetFps;
+                _ticksPerFrame = Stopwatch.Frequency / _device.TargetVSyncInterval;
+                _targetVSyncInterval = _device.TargetVSyncInterval;
             }
         }
 
-        public IGraphicBufferProducer CreateLayer(out long layerId, ulong pid, LayerState initialState = LayerState.ManagedClosed)
+        public IGraphicBufferProducer CreateLayer(out long layerId, ulong pid,
+            LayerState initialState = LayerState.ManagedClosed)
         {
             layerId = 1;
 
@@ -118,7 +123,8 @@ namespace Ryujinx.HLE.HOS.Services.SurfaceFlinger
             {
                 Logger.Info?.Print(LogClass.SurfaceFlinger, $"Creating layer {layerId}");
 
-                BufferQueueCore core = BufferQueue.CreateBufferQueue(_device, pid, out BufferQueueProducer producer, out BufferQueueConsumer consumer);
+                BufferQueueCore core = BufferQueue.CreateBufferQueue(_device, pid, out BufferQueueProducer producer,
+                    out BufferQueueConsumer consumer);
 
                 core.BufferQueued += () =>
                 {
@@ -181,14 +187,16 @@ namespace Ryujinx.HLE.HOS.Services.SurfaceFlinger
 
                 if (layer == null)
                 {
-                    Logger.Error?.Print(LogClass.SurfaceFlinger, $"Failed to destroy managed layer {layerId} (not found)");
+                    Logger.Error?.Print(LogClass.SurfaceFlinger,
+                        $"Failed to destroy managed layer {layerId} (not found)");
 
                     return Vi.ResultCode.InvalidValue;
                 }
 
                 if (layer.State != LayerState.ManagedClosed && layer.State != LayerState.ManagedOpened)
                 {
-                    Logger.Error?.Print(LogClass.SurfaceFlinger, $"Failed to destroy managed layer {layerId} (permission denied)");
+                    Logger.Error?.Print(LogClass.SurfaceFlinger,
+                        $"Failed to destroy managed layer {layerId} (permission denied)");
 
                     return Vi.ResultCode.PermissionDenied;
                 }
@@ -212,14 +220,16 @@ namespace Ryujinx.HLE.HOS.Services.SurfaceFlinger
 
                 if (layer == null)
                 {
-                    Logger.Error?.Print(LogClass.SurfaceFlinger, $"Failed to destroy stray layer {layerId} (not found)");
+                    Logger.Error?.Print(LogClass.SurfaceFlinger,
+                        $"Failed to destroy stray layer {layerId} (not found)");
 
                     return Vi.ResultCode.InvalidValue;
                 }
 
                 if (layer.State != LayerState.Stray)
                 {
-                    Logger.Error?.Print(LogClass.SurfaceFlinger, $"Failed to destroy stray layer {layerId} (permission denied)");
+                    Logger.Error?.Print(LogClass.SurfaceFlinger,
+                        $"Failed to destroy stray layer {layerId} (permission denied)");
 
                     return Vi.ResultCode.PermissionDenied;
                 }
@@ -370,15 +380,20 @@ namespace Ryujinx.HLE.HOS.Services.SurfaceFlinger
 
                 if (acquireStatus == Status.Success)
                 {
-                    // If device vsync is disabled, reflect the change.
-                    if (!_device.EnableDeviceVsync)
+                    if (_device.VSyncMode == VSyncMode.Unbounded)
                     {
                         if (_swapInterval != 0)
                         {
                             UpdateSwapInterval(0);
+                            _vSyncMode = _device.VSyncMode;
                         }
                     }
-                    else if (item.SwapInterval != _swapInterval)
+                    else if (_device.VSyncMode != _vSyncMode)
+                    {
+                        UpdateSwapInterval(_device.VSyncMode == VSyncMode.Unbounded ? 0 : item.SwapInterval);
+                        _vSyncMode = _device.VSyncMode;
+                    }
+                    else if (item.SwapInterval != _swapInterval || _device.TargetVSyncInterval != _targetVSyncInterval)
                     {
                         UpdateSwapInterval(item.SwapInterval);
                     }
@@ -414,7 +429,9 @@ namespace Ryujinx.HLE.HOS.Services.SurfaceFlinger
 
             byte bytesPerPixel =
                 format == Format.B5G6R5Unorm ||
-                format == Format.R4G4B4A4Unorm ? (byte)2 : (byte)4;
+                format == Format.R4G4B4A4Unorm
+                    ? (byte)2
+                    : (byte)4;
 
             int gobBlocksInY = 1 << item.GraphicBuffer.Object.Buffer.Surfaces[0].BlockHeightLog2;
 
@@ -438,26 +455,22 @@ namespace Ryujinx.HLE.HOS.Services.SurfaceFlinger
                 aspectRatio.ToFloatX(),
                 aspectRatio.ToFloatY());
 
-            TextureCallbackInformation textureCallbackInformation = new()
-            {
-                Layer = layer,
-                Item = item,
-            };
+            TextureCallbackInformation textureCallbackInformation = new() { Layer = layer, Item = item, };
 
             if (_device.Gpu.Window.EnqueueFrameThreadSafe(
-                layer.Owner,
-                frameBufferAddress,
-                frameBufferWidth,
-                frameBufferHeight,
-                0,
-                false,
-                gobBlocksInY,
-                format,
-                bytesPerPixel,
-                crop,
-                AcquireBuffer,
-                ReleaseBuffer,
-                textureCallbackInformation))
+                    layer.Owner,
+                    frameBufferAddress,
+                    frameBufferWidth,
+                    frameBufferHeight,
+                    0,
+                    false,
+                    gobBlocksInY,
+                    format,
+                    bytesPerPixel,
+                    crop,
+                    AcquireBuffer,
+                    ReleaseBuffer,
+                    textureCallbackInformation))
             {
                 if (item.Fence.FenceCount == 0)
                 {

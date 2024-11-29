@@ -38,6 +38,8 @@ namespace Ryujinx.Ava.UI.Windows
 {
     public partial class MainWindow : StyleableAppWindow
     {
+        internal static MainWindowViewModel MainWindowViewModel { get; private set; }
+
         public MainWindowViewModel ViewModel { get; }
 
         internal readonly AvaHostUIHandler UiHandler;
@@ -70,7 +72,7 @@ namespace Ryujinx.Ava.UI.Windows
 
         public MainWindow()
         {
-            DataContext = ViewModel = new MainWindowViewModel { Window = this };
+            DataContext = ViewModel = MainWindowViewModel = new MainWindowViewModel { Window = this };
 
             InitializeComponent();
             Load();
@@ -398,7 +400,7 @@ namespace Ryujinx.Ava.UI.Windows
                     await UserErrorDialog.ShowUserErrorDialog(UserError.NoKeys));
             }
 
-            if (ConfigurationState.Instance.CheckUpdatesOnStart && 
+            if (ConfigurationState.Instance.CheckUpdatesOnStart &&
                 !CommandLineState.HideAvailableUpdates &&
                 Updater.CanUpdate(false))
             {

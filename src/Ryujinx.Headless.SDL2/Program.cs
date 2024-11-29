@@ -565,7 +565,7 @@ namespace Ryujinx.Headless.SDL2
                 window,
                 options.SystemLanguage,
                 options.SystemRegion,
-                !options.DisableVSync,
+                options.VSyncMode,
                 !options.DisableDockedMode,
                 !options.DisablePTC,
                 options.EnableInternetAccess,
@@ -582,7 +582,8 @@ namespace Ryujinx.Headless.SDL2
                 Common.Configuration.Multiplayer.MultiplayerMode.Disabled,
                 false,
                 "",
-                "");
+                "",
+                options.CustomVSyncInterval);
 
             return new Switch(configuration);
         }

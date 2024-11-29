@@ -32,7 +32,12 @@ namespace Ryujinx.Headless.SDL2
         protected const int DefaultWidth = 1280;
         protected const int DefaultHeight = 720;
         private const int TargetFps = 60;
-        private SDL_WindowFlags DefaultFlags = SDL_WindowFlags.SDL_WINDOW_ALLOW_HIGHDPI | SDL_WindowFlags.SDL_WINDOW_RESIZABLE | SDL_WindowFlags.SDL_WINDOW_INPUT_FOCUS | SDL_WindowFlags.SDL_WINDOW_SHOWN;
+
+        private SDL_WindowFlags DefaultFlags = SDL_WindowFlags.SDL_WINDOW_ALLOW_HIGHDPI |
+                                               SDL_WindowFlags.SDL_WINDOW_RESIZABLE |
+                                               SDL_WindowFlags.SDL_WINDOW_INPUT_FOCUS |
+                                               SDL_WindowFlags.SDL_WINDOW_SHOWN;
+
         private SDL_WindowFlags FullscreenFlag = 0;
 
         private static readonly ConcurrentQueue<Action> _mainThreadActions = new();
@@ -135,7 +140,8 @@ namespace Ryujinx.Headless.SDL2
 
         private void SetWindowIcon()
         {
-            Stream iconStream = typeof(WindowBase).Assembly.GetManifestResourceStream("Ryujinx.Headless.SDL2.Ryujinx.bmp");
+            Stream iconStream =
+                typeof(WindowBase).Assembly.GetManifestResourceStream("Ryujinx.Headless.SDL2.Ryujinx.bmp");
             byte[] iconBytes = new byte[iconStream!.Length];
 
             if (iconStream.Read(iconBytes, 0, iconBytes.Length) != iconBytes.Length)
@@ -167,9 +173,15 @@ namespace Ryujinx.Headless.SDL2
             var nacp = activeProcess.ApplicationControlProperties;
             int desiredLanguage = (int)Device.System.State.DesiredTitleLanguage;
 
-            string titleNameSection = string.IsNullOrWhiteSpace(nacp.Title[desiredLanguage].NameString.ToString()) ? string.Empty : $" - {nacp.Title[desiredLanguage].NameString.ToString()}";
-            string titleVersionSection = string.IsNullOrWhiteSpace(nacp.DisplayVersionString.ToString()) ? string.Empty : $" v{nacp.DisplayVersionString.ToString()}";
-            string titleIdSection = string.IsNullOrWhiteSpace(activeProcess.ProgramIdText) ? string.Empty : $" ({activeProcess.ProgramIdText.ToUpper()})";
+            string titleNameSection = string.IsNullOrWhiteSpace(nacp.Title[desiredLanguage].NameString.ToString())
+                ? string.Empty
+                : $" - {nacp.Title[desiredLanguage].NameString.ToString()}";
+            string titleVersionSection = string.IsNullOrWhiteSpace(nacp.DisplayVersionString.ToString())
+                ? string.Empty
+                : $" v{nacp.DisplayVersionString.ToString()}";
+            string titleIdSection = string.IsNullOrWhiteSpace(activeProcess.ProgramIdText)
+                ? string.Empty
+                : $" ({activeProcess.ProgramIdText.ToUpper()})";
             string titleArchSection = activeProcess.Is64Bit ? " (64-bit)" : " (32-bit)";
 
             Width = DefaultWidth;
@@ -189,7 +201,10 @@ namespace Ryujinx.Headless.SDL2
                 FullscreenFlag = SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP;
             }
 
-            WindowHandle = SDL_CreateWindow($"Ryujinx {Program.Version}{titleNameSection}{titleVersionSection}{titleIdSection}{titleArchSection}", SDL_WINDOWPOS_CENTERED_DISPLAY(DisplayId), SDL_WINDOWPOS_CENTERED_DISPLAY(DisplayId), Width, Height, DefaultFlags | FullscreenFlag | GetWindowFlags());
+            WindowHandle = SDL_CreateWindow(
+                $"Ryujinx {Program.Version}{titleNameSection}{titleVersionSection}{titleIdSection}{titleArchSection}",
+                SDL_WINDOWPOS_CENTERED_DISPLAY(DisplayId), SDL_WINDOWPOS_CENTERED_DISPLAY(DisplayId), Width, Height,
+                DefaultFlags | FullscreenFlag | GetWindowFlags());
 
             if (WindowHandle == nint.Zero)
             {
@@ -223,6 +238,7 @@ namespace Ryujinx.Headless.SDL2
                             Renderer?.Window.SetSize(Width, Height);
                             MouseDriver.SetClientSize(Width, Height);
                         }
+
                         break;
 
                     case SDL_WindowEventID.SDL_WINDOWEVENT_CLOSE:
@@ -314,7 +330,7 @@ namespace Ryujinx.Headless.SDL2
                         }
 
                         StatusUpdatedEvent?.Invoke(this, new StatusUpdatedEventArgs(
-                            Device.EnableDeviceVsync,
+                            Device.VSyncMode.ToString(),
                             dockedMode,
                             Device.Configuration.AspectRatio.ToText(),
                             $"Game: {Device.Statistics.GetGameFrameRate():00.00} FPS ({Device.Statistics.GetGameFrameTime():00.00} ms)",
@@ -420,7 +436,9 @@ namespace Ryujinx.Headless.SDL2
             // Get screen touch position
             if (!_enableMouse)
             {
-                hasTouch = TouchScreenManager.Update(true, (_inputManager.MouseDriver as SDL2MouseDriver).IsButtonPressed(MouseButton.Button1), _aspectRatio.ToFloat());
+                hasTouch = TouchScreenManager.Update(true,
+                    (_inputManager.MouseDriver as SDL2MouseDriver).IsButtonPressed(MouseButton.Button1),
+                    _aspectRatio.ToFloat());
             }
 
             if (!hasTouch)
@@ -443,19 +461,13 @@ namespace Ryujinx.Headless.SDL2
 
             InitializeWindow();
 
-            Thread renderLoopThread = new(Render)
-            {
-                Name = "GUI.RenderLoop",
-            };
+            Thread renderLoopThread = new(Render) { Name = "GUI.RenderLoop", };
             renderLoopThread.Start();
 
             Thread nvidiaStutterWorkaround = null;
             if (Renderer is OpenGLRenderer)
             {
-                nvidiaStutterWorkaround = new Thread(NvidiaStutterWorkaround)
-                {
-                    Name = "GUI.NvidiaStutterWorkaround",
-                };
+                nvidiaStutterWorkaround = new Thread(NvidiaStutterWorkaround) { Name = "GUI.NvidiaStutterWorkaround", };
                 nvidiaStutterWorkaround.Start();
             }
 
@@ -488,14 +500,17 @@ namespace Ryujinx.Headless.SDL2
         public bool DisplayMessageDialog(ControllerAppletUIArgs args)
         {
             if (_ignoreControllerApplet) return false;
-            
-            string playerCount = args.PlayerCountMin == args.PlayerCountMax ? $"exactly {args.PlayerCountMin}" : $"{args.PlayerCountMin}-{args.PlayerCountMax}";
 
-            string message = $"Application requests {playerCount} {"player".ToQuantity(args.PlayerCountMin + args.PlayerCountMax, ShowQuantityAs.None)} with:\n\n"
-                           + $"TYPES: {args.SupportedStyles}\n\n"
-                           + $"PLAYERS: {string.Join(", ", args.SupportedPlayers)}\n\n"
-                           + (args.IsDocked ? "Docked mode set. Handheld is also invalid.\n\n" : string.Empty)
-                           + "Please reconfigure Input now and then press OK.";
+            string playerCount = args.PlayerCountMin == args.PlayerCountMax
+                ? $"exactly {args.PlayerCountMin}"
+                : $"{args.PlayerCountMin}-{args.PlayerCountMax}";
+
+            string message =
+                $"Application requests {playerCount} {"player".ToQuantity(args.PlayerCountMin + args.PlayerCountMax, ShowQuantityAs.None)} with:\n\n"
+                + $"TYPES: {args.SupportedStyles}\n\n"
+                + $"PLAYERS: {string.Join(", ", args.SupportedPlayers)}\n\n"
+                + (args.IsDocked ? "Docked mode set. Handheld is also invalid.\n\n" : string.Empty)
+                + "Please reconfigure Input now and then press OK.";
 
             return DisplayMessageDialog("Controller Applet", message);
         }
@@ -525,11 +540,7 @@ namespace Ryujinx.Headless.SDL2
 
             for (int i = 0; i < buttonsText.Length; i++)
             {
-                data.buttons[i] = new SDL_MessageBoxButtonData
-                {
-                    buttonid = i,
-                    text = buttonsText[i],
-                };
+                data.buttons[i] = new SDL_MessageBoxButtonData { buttonid = i, text = buttonsText[i], };
             }
 
             SDL_ShowMessageBox(ref data, out int _);

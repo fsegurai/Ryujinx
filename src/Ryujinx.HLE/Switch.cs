@@ -27,7 +27,10 @@ namespace Ryujinx.HLE
         public TamperMachine TamperMachine { get; }
         public IHostUIHandler UIHandler { get; }
 
-        public bool EnableDeviceVsync { get; set; }
+        public VSyncMode VSyncMode { get; set; } = VSyncMode.Switch;
+        public bool CustomVSyncIntervalEnabled { get; set; } = false;
+        public int CustomVSyncInterval { get; set; }
+        public long TargetVSyncInterval { get; set; } = 60;
 
         public bool IsFrameAvailable => Gpu.Window.IsFrameAvailable;
 
@@ -41,30 +44,34 @@ namespace Ryujinx.HLE
             FileSystem = Configuration.VirtualFileSystem;
             UIHandler = Configuration.HostUIHandler;
 
-            MemoryAllocationFlags memoryAllocationFlags = configuration.MemoryManagerMode == MemoryManagerMode.SoftwarePageTable
-                ? MemoryAllocationFlags.Reserve
-                : MemoryAllocationFlags.Reserve | MemoryAllocationFlags.Mirrorable;
+            MemoryAllocationFlags memoryAllocationFlags =
+                configuration.MemoryManagerMode == MemoryManagerMode.SoftwarePageTable
+                    ? MemoryAllocationFlags.Reserve
+                    : MemoryAllocationFlags.Reserve | MemoryAllocationFlags.Mirrorable;
 
 #pragma warning disable IDE0055 // Disable formatting
             AudioDeviceDriver = new CompatLayerHardwareDeviceDriver(Configuration.AudioDeviceDriver);
-            Memory            = new MemoryBlock(Configuration.MemoryConfiguration.ToDramSize(), memoryAllocationFlags);
-            Gpu               = new GpuContext(Configuration.GpuRenderer);
-            System            = new HOS.Horizon(this);
-            Statistics        = new PerformanceStatistics();
-            Hid               = new Hid(this, System.HidStorage);
-            Processes         = new ProcessLoader(this);
-            TamperMachine     = new TamperMachine();
+            Memory = new MemoryBlock(Configuration.MemoryConfiguration.ToDramSize(), memoryAllocationFlags);
+            Gpu = new GpuContext(Configuration.GpuRenderer);
+            System = new HOS.Horizon(this);
+            Statistics = new PerformanceStatistics();
+            Hid = new Hid(this, System.HidStorage);
+            Processes = new ProcessLoader(this);
+            TamperMachine = new TamperMachine();
 
             System.InitializeServices();
             System.State.SetLanguage(Configuration.SystemLanguage);
             System.State.SetRegion(Configuration.Region);
 
-            EnableDeviceVsync                       = Configuration.EnableVsync;
-            System.State.DockedMode                 = Configuration.EnableDockedMode;
-            System.PerformanceState.PerformanceMode = System.State.DockedMode ? PerformanceMode.Boost : PerformanceMode.Default;
-            System.EnablePtc                        = Configuration.EnablePtc;
-            System.FsIntegrityCheckLevel            = Configuration.FsIntegrityCheckLevel;
-            System.GlobalAccessLogMode              = Configuration.FsGlobalAccessLogMode;
+            VSyncMode = Configuration.VSyncMode;
+            CustomVSyncInterval = Configuration.CustomVSyncInterval;
+            System.State.DockedMode = Configuration.EnableDockedMode;
+            System.PerformanceState.PerformanceMode =
+                System.State.DockedMode ? PerformanceMode.Boost : PerformanceMode.Default;
+            System.EnablePtc = Configuration.EnablePtc;
+            System.FsIntegrityCheckLevel = Configuration.FsIntegrityCheckLevel;
+            System.GlobalAccessLogMode = Configuration.FsGlobalAccessLogMode;
+            UpdateVSyncInterval();
 #pragma warning restore IDE0055
         }
 
@@ -75,7 +82,37 @@ namespace Ryujinx.HLE
             Gpu.GPFifo.DispatchCalls();
         }
 
-        public bool LoadCart(string exeFsDir, string romFsFile = null) => Processes.LoadUnpackedNca(exeFsDir, romFsFile);
+        public void IncrementCustomVSyncInterval()
+        {
+            CustomVSyncInterval += 1;
+            UpdateVSyncInterval();
+        }
+
+        public void DecrementCustomVSyncInterval()
+        {
+            CustomVSyncInterval -= 1;
+            UpdateVSyncInterval();
+        }
+
+        public void UpdateVSyncInterval()
+        {
+            switch (VSyncMode)
+            {
+                case VSyncMode.Custom:
+                    TargetVSyncInterval = CustomVSyncInterval;
+                    break;
+                case VSyncMode.Switch:
+                    TargetVSyncInterval = 60;
+                    break;
+                case VSyncMode.Unbounded:
+                    TargetVSyncInterval = 1;
+                    break;
+            }
+        }
+
+        public bool LoadCart(string exeFsDir, string romFsFile = null) =>
+            Processes.LoadUnpackedNca(exeFsDir, romFsFile);
+
         public bool LoadXci(string xciFile, ulong applicationId = 0) => Processes.LoadXci(xciFile, applicationId);
         public bool LoadNca(string ncaFile) => Processes.LoadNca(ncaFile);
         public bool LoadNsp(string nspFile, ulong applicationId = 0) => Processes.LoadNsp(nspFile, applicationId);

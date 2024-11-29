@@ -27,7 +27,8 @@ namespace Ryujinx.Ava.UI.Models
 
         public long Size
         {
-            get => _size; set
+            get => _size;
+            set
             {
                 _size = value;
                 SizeAvailable = true;
@@ -47,7 +48,8 @@ namespace Ryujinx.Ava.UI.Models
             TitleId = info.ProgramId;
             UserId = info.UserId;
 
-            var appData = App.MainWindow.ViewModel.Applications.FirstOrDefault(x => x.IdString.Equals(TitleIdString, StringComparison.OrdinalIgnoreCase));
+            var appData = MainWindow.MainWindowViewModel.Applications.FirstOrDefault(x =>
+                x.IdString.Equals(TitleIdString, StringComparison.OrdinalIgnoreCase));
 
             InGameList = appData != null;
 
@@ -91,7 +93,6 @@ namespace Ryujinx.Ava.UI.Models
 
                 Size = totalSize;
             });
-
         }
     }
 }

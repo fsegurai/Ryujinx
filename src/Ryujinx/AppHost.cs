@@ -39,7 +39,6 @@ using Ryujinx.UI.App.Common;
 using Ryujinx.UI.Common;
 using Ryujinx.UI.Common.Configuration;
 using Ryujinx.UI.Common.Helper;
-using Silk.NET.Vulkan;
 using SkiaSharp;
 using SPB.Graphics.Vulkan;
 using System;
@@ -57,6 +56,8 @@ using Key = Ryujinx.Input.Key;
 using MouseButton = Ryujinx.Input.MouseButton;
 using ScalingFilter = Ryujinx.Common.Configuration.ScalingFilter;
 using Size = Avalonia.Size;
+using Switch = Ryujinx.HLE.Switch;
+using VSyncMode = Ryujinx.Common.Configuration.VSyncMode;
 
 namespace Ryujinx.Ava
 {
@@ -204,6 +205,9 @@ namespace Ryujinx.Ava
             ConfigurationState.Instance.Graphics.ScalingFilter.Event += UpdateScalingFilter;
             ConfigurationState.Instance.Graphics.ScalingFilterLevel.Event += UpdateScalingFilterLevel;
             ConfigurationState.Instance.Graphics.EnableColorSpacePassthrough.Event += UpdateColorSpacePassthrough;
+            ConfigurationState.Instance.Graphics.VSyncMode.Event += UpdateVSyncMode;
+            ConfigurationState.Instance.Graphics.CustomVSyncInterval.Event += UpdateCustomVSyncIntervalValue;
+            ConfigurationState.Instance.Graphics.EnableCustomVSyncInterval.Event += UpdateCustomVSyncIntervalEnabled;
 
             ConfigurationState.Instance.System.EnableInternetAccess.Event += UpdateEnableInternetAccessState;
             ConfigurationState.Instance.Multiplayer.LanInterfaceId.Event += UpdateLanInterfaceIdState;
@@ -297,6 +301,65 @@ namespace Ryujinx.Ava
         {
             _renderer.Window?.SetColorSpacePassthrough((bool)ConfigurationState.Instance.Graphics
                 .EnableColorSpacePassthrough.Value);
+        }
+
+        public void UpdateVSyncMode(object sender, ReactiveEventArgs<VSyncMode> e)
+        {
+            if (Device != null)
+            {
+                Device.VSyncMode = e.NewValue;
+                Device.UpdateVSyncInterval();
+            }
+
+            _renderer.Window?.ChangeVSyncMode((Ryujinx.Graphics.GAL.VSyncMode)e.NewValue);
+            _viewModel.ShowCustomVSyncIntervalPicker = (e.NewValue == VSyncMode.Custom);
+        }
+
+        public void VSyncModeToggle()
+        {
+            VSyncMode oldVSyncMode = Device.VSyncMode;
+            VSyncMode newVSyncMode = VSyncMode.Switch;
+            bool customVSyncIntervalEnabled = ConfigurationState.Instance.Graphics.EnableCustomVSyncInterval.Value;
+            switch (oldVSyncMode)
+            {
+                case VSyncMode.Switch:
+                    newVSyncMode = VSyncMode.Unbounded;
+                    break;
+                case VSyncMode.Unbounded:
+                    if (customVSyncIntervalEnabled)
+                    {
+                        newVSyncMode = VSyncMode.Custom;
+                    }
+                    else
+                    {
+                        newVSyncMode = VSyncMode.Switch;
+                    }
+
+                    break;
+                case VSyncMode.Custom:
+                    newVSyncMode = VSyncMode.Switch;
+                    break;
+            }
+
+            UpdateVSyncMode(this, new ReactiveEventArgs<VSyncMode>(oldVSyncMode, newVSyncMode));
+        }
+
+        private void UpdateCustomVSyncIntervalValue(object sender, ReactiveEventArgs<int> e)
+        {
+            if (Device != null)
+            {
+                Device.TargetVSyncInterval = e.NewValue;
+                Device.UpdateVSyncInterval();
+            }
+        }
+
+        private void UpdateCustomVSyncIntervalEnabled(object sender, ReactiveEventArgs<bool> e)
+        {
+            if (Device != null)
+            {
+                Device.CustomVSyncIntervalEnabled = e.NewValue;
+                Device.UpdateVSyncInterval();
+            }
         }
 
         private void ShowCursor()
@@ -520,12 +583,6 @@ namespace Ryujinx.Ava
         private void UpdateDisableP2pState(object sender, ReactiveEventArgs<bool> e)
         {
             Device.Configuration.MultiplayerDisableP2p = e.NewValue;
-        }
-
-        public void ToggleVSync()
-        {
-            Device.EnableDeviceVsync = !Device.EnableDeviceVsync;
-            _renderer.Window.ChangeVSyncMode(Device.EnableDeviceVsync);
         }
 
         public void Stop()
@@ -879,38 +936,38 @@ namespace Ryujinx.Ava
             var memoryConfiguration = ConfigurationState.Instance.System.DramSize.Value;
 
             Device = new HLE.Switch(new HLEConfiguration(
-                    VirtualFileSystem,
-                    _viewModel.LibHacHorizonManager,
-                    ContentManager,
-                    _accountManager,
-                    _userChannelPersistence,
-                    renderer,
-                    InitializeAudio(),
-                    memoryConfiguration,
-                    _viewModel.UiHandler,
-                    (SystemLanguage)ConfigurationState.Instance.System.Language.Value,
-                    (RegionCode)ConfigurationState.Instance.System.Region.Value,
-                    ConfigurationState.Instance.Graphics.EnableVsync,
-                    ConfigurationState.Instance.System.EnableDockedMode,
-                    ConfigurationState.Instance.System.EnablePtc,
-                    ConfigurationState.Instance.System.EnableInternetAccess,
-                    ConfigurationState.Instance.System.EnableFsIntegrityChecks
-                        ? IntegrityCheckLevel.ErrorOnInvalid
-                        : IntegrityCheckLevel.None,
-                    ConfigurationState.Instance.System.FsGlobalAccessLogMode,
-                    ConfigurationState.Instance.System.SystemTimeOffset,
-                    ConfigurationState.Instance.System.TimeZone,
-                    ConfigurationState.Instance.System.MemoryManagerMode,
-                    ConfigurationState.Instance.System.IgnoreMissingServices,
-                    ConfigurationState.Instance.Graphics.AspectRatio,
-                    ConfigurationState.Instance.System.AudioVolume,
-                    ConfigurationState.Instance.System.UseHypervisor,
-                    ConfigurationState.Instance.Multiplayer.LanInterfaceId.Value,
-                    ConfigurationState.Instance.Multiplayer.Mode,
-                    ConfigurationState.Instance.Multiplayer.DisableP2p,
-                    ConfigurationState.Instance.Multiplayer.LdnPassphrase,
-                    ConfigurationState.Instance.Multiplayer.LdnServer)
-                );
+                VirtualFileSystem,
+                _viewModel.LibHacHorizonManager,
+                ContentManager,
+                _accountManager,
+                _userChannelPersistence,
+                renderer,
+                InitializeAudio(),
+                memoryConfiguration,
+                _viewModel.UiHandler,
+                (SystemLanguage)ConfigurationState.Instance.System.Language.Value,
+                (RegionCode)ConfigurationState.Instance.System.Region.Value,
+                ConfigurationState.Instance.Graphics.VSyncMode,
+                ConfigurationState.Instance.System.EnableDockedMode,
+                ConfigurationState.Instance.System.EnablePtc,
+                ConfigurationState.Instance.System.EnableInternetAccess,
+                ConfigurationState.Instance.System.EnableFsIntegrityChecks
+                    ? IntegrityCheckLevel.ErrorOnInvalid
+                    : IntegrityCheckLevel.None,
+                ConfigurationState.Instance.System.FsGlobalAccessLogMode,
+                ConfigurationState.Instance.System.SystemTimeOffset,
+                ConfigurationState.Instance.System.TimeZone,
+                ConfigurationState.Instance.System.MemoryManagerMode,
+                ConfigurationState.Instance.System.IgnoreMissingServices,
+                ConfigurationState.Instance.Graphics.AspectRatio,
+                ConfigurationState.Instance.System.AudioVolume,
+                ConfigurationState.Instance.System.UseHypervisor,
+                ConfigurationState.Instance.Multiplayer.LanInterfaceId.Value,
+                ConfigurationState.Instance.Multiplayer.Mode,
+                ConfigurationState.Instance.Multiplayer.DisableP2p,
+                ConfigurationState.Instance.Multiplayer.LdnPassphrase,
+                ConfigurationState.Instance.Multiplayer.LdnServer,
+                ConfigurationState.Instance.Graphics.CustomVSyncInterval.Value));
         }
 
         private static IHardwareDeviceDriver InitializeAudio()
@@ -1036,7 +1093,7 @@ namespace Ryujinx.Ava
                 Device.Gpu.SetGpuThread();
                 Device.Gpu.InitializeShaderCache(_gpuCancellationTokenSource.Token);
 
-                _renderer.Window.ChangeVSyncMode(Device.EnableDeviceVsync);
+                _renderer.Window.ChangeVSyncMode((Ryujinx.Graphics.GAL.VSyncMode)Device.VSyncMode);
 
                 while (_isActive)
                 {
@@ -1099,6 +1156,7 @@ namespace Ryujinx.Ava
             string dockedMode = ConfigurationState.Instance.System.EnableDockedMode
                 ? LocaleManager.Instance[LocaleKeys.Docked]
                 : LocaleManager.Instance[LocaleKeys.Handheld];
+            string vSyncMode = Device.VSyncMode.ToString();
 
             UpdateShaderCount();
 
@@ -1108,7 +1166,7 @@ namespace Ryujinx.Ava
             }
 
             StatusUpdatedEvent?.Invoke(this, new StatusUpdatedEventArgs(
-                Device.EnableDeviceVsync,
+                vSyncMode,
                 LocaleManager.Instance[LocaleKeys.VolumeShort] + $": {(int)(Device.GetVolume() * 100)}%",
                 dockedMode,
                 ConfigurationState.Instance.Graphics.AspectRatio.Value.ToText(),
@@ -1214,13 +1272,21 @@ namespace Ryujinx.Ava
                 {
                     switch (currentHotkeyState)
                     {
-                        case KeyboardHotkeyState.ToggleVSync:
-                            ToggleVSync();
+                        case KeyboardHotkeyState.ToggleVSyncMode:
+                            VSyncModeToggle();
+                            break;
+                        case KeyboardHotkeyState.CustomVSyncIntervalDecrement:
+                            Device.DecrementCustomVSyncInterval();
+                            _viewModel.CustomVSyncInterval -= 1;
+                            break;
+                        case KeyboardHotkeyState.CustomVSyncIntervalIncrement:
+                            Device.IncrementCustomVSyncInterval();
+                            _viewModel.CustomVSyncInterval += 1;
                             break;
                         case KeyboardHotkeyState.Screenshot:
                             ScreenshotRequested = true;
                             break;
-                        case KeyboardHotkeyState.ShowUI:
+                        case KeyboardHotkeyState.ShowUi:
                             _viewModel.ShowMenuAndStatusBar = !_viewModel.ShowMenuAndStatusBar;
                             break;
                         case KeyboardHotkeyState.Pause:
@@ -1305,9 +1371,9 @@ namespace Ryujinx.Ava
         {
             KeyboardHotkeyState state = KeyboardHotkeyState.None;
 
-            if (_keyboardInterface.IsPressed((Key)ConfigurationState.Instance.Hid.Hotkeys.Value.ToggleVsync))
+            if (_keyboardInterface.IsPressed((Key)ConfigurationState.Instance.Hid.Hotkeys.Value.ToggleVSyncMode))
             {
-                state = KeyboardHotkeyState.ToggleVSync;
+                state = KeyboardHotkeyState.ToggleVSyncMode;
             }
             else if (_keyboardInterface.IsPressed((Key)ConfigurationState.Instance.Hid.Hotkeys.Value.Screenshot))
             {
@@ -1315,7 +1381,7 @@ namespace Ryujinx.Ava
             }
             else if (_keyboardInterface.IsPressed((Key)ConfigurationState.Instance.Hid.Hotkeys.Value.ShowUI))
             {
-                state = KeyboardHotkeyState.ShowUI;
+                state = KeyboardHotkeyState.ShowUi;
             }
             else if (_keyboardInterface.IsPressed((Key)ConfigurationState.Instance.Hid.Hotkeys.Value.Pause))
             {
@@ -1340,6 +1406,16 @@ namespace Ryujinx.Ava
             else if (_keyboardInterface.IsPressed((Key)ConfigurationState.Instance.Hid.Hotkeys.Value.VolumeDown))
             {
                 state = KeyboardHotkeyState.VolumeDown;
+            }
+            else if (_keyboardInterface.IsPressed((Key)ConfigurationState.Instance.Hid.Hotkeys.Value
+                         .CustomVSyncIntervalIncrement))
+            {
+                state = KeyboardHotkeyState.CustomVSyncIntervalIncrement;
+            }
+            else if (_keyboardInterface.IsPressed((Key)ConfigurationState.Instance.Hid.Hotkeys.Value
+                         .CustomVSyncIntervalDecrement))
+            {
+                state = KeyboardHotkeyState.CustomVSyncIntervalDecrement;
             }
 
             return state;
